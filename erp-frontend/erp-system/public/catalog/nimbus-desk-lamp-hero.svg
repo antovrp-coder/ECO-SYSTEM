@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 1080" role="img" aria-labelledby="title desc">
+  <title id="title">Nimbus Desk Lamp hero image</title>
+  <desc id="desc">Contemporary desk lamp illuminated on a warm editorial set.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff4e9"/>
+      <stop offset="100%" stop-color="#f8eef7"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="1080" fill="url(#bg)"/>
+  <ellipse cx="468" cy="892" rx="228" ry="52" fill="#edd8d9"/>
+  <rect x="264" y="818" width="404" height="42" rx="21" fill="#4f3942"/>
+  <rect x="442" y="438" width="44" height="382" rx="22" fill="#5e434a"/>
+  <path d="M468 462c42-158 126-248 250-272" fill="none" stroke="#705159" stroke-width="26" stroke-linecap="round"/>
+  <path d="M608 176h154c28 0 52 24 52 52v108H594V228c0-28 22-52 50-52z" fill="#d49f67"/>
+  <path d="M620 328h170c42 0 76 34 76 76v40H544v-40c0-42 34-76 76-76z" fill="#f2c16f" fill-opacity="0.76"/>
+  <text x="96" y="144" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700" fill="#543d44">Nimbus Desk Lamp</text>
+  <text x="96" y="192" font-family="Segoe UI, Arial, sans-serif" font-size="24" fill="#78616d">Directional glow with sculpted aluminum arm</text>
+</svg>

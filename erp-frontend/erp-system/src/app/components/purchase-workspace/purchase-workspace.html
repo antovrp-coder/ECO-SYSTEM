@@ -1,0 +1,156 @@
+<section class="purchase-shell">
+  <div *ngIf="loading" class="workspace-state-card">
+    Loading purchase workspace...
+  </div>
+
+  <div *ngIf="!loading && error" class="workspace-state-card error">
+    {{ error }}
+  </div>
+
+  <ng-container *ngIf="!loading && !error">
+    <section class="purchase-hero">
+      <div>
+        <div class="purchase-kicker">Procurement Control</div>
+        <h2>{{ tabName() }}</h2>
+        <p>Purchase operations for requisition intake, supplier coverage, and order execution across active buying categories.</p>
+      </div>
+      <div class="purchase-metrics">
+        <article *ngFor="let metric of metrics; trackBy: trackByMetric">
+          <span>{{ metric.label }}</span>
+          <strong>{{ metric.value }}</strong>
+          <em>{{ metric.delta }}</em>
+        </article>
+      </div>
+    </section>
+
+    <ng-container [ngSwitch]="tabName()">
+      <section *ngSwitchCase="'Overview'" class="purchase-section metrics-grid">
+        <article class="panel-card metric-card" *ngFor="let metric of metrics; trackBy: trackByMetric">
+          <div class="purchase-topline">
+            <strong>{{ metric.label }}</strong>
+            <span>{{ metric.delta }}</span>
+          </div>
+          <div class="metric-value">{{ metric.value }}</div>
+          <div class="purchase-copy">{{ metric.copy }}</div>
+        </article>
+      </section>
+
+      <section *ngSwitchCase="'Requisitions'" class="purchase-section">
+        <article class="panel-card form-card">
+          <div class="panel-header compact">
+            <h3>Add requisition</h3>
+            <span>{{ requisitions.length }} open records</span>
+          </div>
+          <div class="form-grid">
+            <label><span>Request code</span><input [(ngModel)]="requisitionDraft.request_code" /></label>
+            <label><span>Title</span><input [(ngModel)]="requisitionDraft.title" /></label>
+            <label><span>Department</span><input [(ngModel)]="requisitionDraft.department" /></label>
+            <label><span>Requested by</span><input [(ngModel)]="requisitionDraft.requested_by" /></label>
+            <label><span>Priority</span><input [(ngModel)]="requisitionDraft.priority" /></label>
+            <label><span>Status</span><input [(ngModel)]="requisitionDraft.status" /></label>
+            <label><span>Target date</span><input [(ngModel)]="requisitionDraft.target_date" type="date" /></label>
+            <label><span>Estimated value</span><input [(ngModel)]="requisitionDraft.estimated_value" type="number" min="0" /></label>
+            <label class="full-span"><span>Summary</span><input [(ngModel)]="requisitionDraft.summary" /></label>
+          </div>
+          <div class="form-actions">
+            <button type="button" (click)="createRequisition()" [disabled]="requisitionSaving">{{ requisitionSaving ? 'Saving...' : 'Add requisition' }}</button>
+          </div>
+        </article>
+
+        <div class="purchase-grid">
+          <article class="panel-card purchase-card" *ngFor="let requisition of requisitions; trackBy: trackById">
+            <div class="purchase-topline">
+              <strong>{{ requisition.title }}</strong>
+              <span>{{ requisition.request_code }}</span>
+            </div>
+            <div class="purchase-copy">{{ requisition.department }} • {{ requisition.priority }} • {{ requisition.status }}</div>
+            <div class="purchase-detail-grid">
+              <div><span>Requester</span><strong>{{ requisition.requested_by }}</strong></div>
+              <div><span>Target</span><strong>{{ requisition.target_date || 'TBD' }}</strong></div>
+              <div><span>Estimate</span><strong>{{ requisition.estimated_value }}</strong></div>
+              <div><span>Status</span><strong>{{ requisition.status }}</strong></div>
+            </div>
+            <div class="purchase-copy">{{ requisition.summary }}</div>
+          </article>
+        </div>
+      </section>
+
+      <section *ngSwitchCase="'Orders'" class="purchase-section">
+        <article class="panel-card filter-card">
+          <div class="panel-header compact">
+            <h3>Vendor filter</h3>
+            <span>{{ filteredOrders.length }} visible</span>
+          </div>
+          <div class="chip-row">
+            <button type="button" *ngFor="let vendorName of vendorNames" class="selection-chip" [class.active]="vendorFilter === vendorName" (click)="vendorFilter = vendorName">{{ vendorName }}</button>
+          </div>
+        </article>
+
+        <div class="purchase-grid">
+          <article class="panel-card purchase-card" *ngFor="let order of filteredOrders; trackBy: trackById">
+            <div class="purchase-topline">
+              <strong>{{ order.order_code }}</strong>
+              <span>{{ order.vendor_name }}</span>
+            </div>
+            <div class="purchase-copy">{{ order.category }} • {{ order.status }} • {{ order.buyer_name }}</div>
+            <div class="purchase-detail-grid">
+              <div><span>Value</span><strong>{{ order.value }}</strong></div>
+              <div><span>Line items</span><strong>{{ order.line_items }}</strong></div>
+              <div><span>Expected receipt</span><strong>{{ order.expected_receipt }}</strong></div>
+              <div><span>Status</span><strong>{{ order.status }}</strong></div>
+            </div>
+            <div class="chip-row">
+              <button type="button" class="selection-chip" *ngFor="let status of orderStatuses" [class.active]="order.status === status" [disabled]="updatingOrderId === order.id" (click)="updateOrderStatus(order, status)">{{ status }}</button>
+            </div>
+            <div class="purchase-copy">{{ order.summary }}</div>
+          </article>
+        </div>
+      </section>
+
+      <section *ngSwitchCase="'Vendors'" class="purchase-section">
+        <article class="panel-card form-card">
+          <div class="panel-header compact">
+            <h3>Add vendor</h3>
+            <span>{{ vendors.length }} supplier relationships</span>
+          </div>
+          <div class="form-grid compact-grid">
+            <label><span>Vendor code</span><input [(ngModel)]="vendorDraft.vendor_code" /></label>
+            <label><span>Name</span><input [(ngModel)]="vendorDraft.name" /></label>
+            <label><span>Category</span><input [(ngModel)]="vendorDraft.category" /></label>
+            <label><span>Region</span><input [(ngModel)]="vendorDraft.region" /></label>
+            <label><span>Contact</span><input [(ngModel)]="vendorDraft.contact_name" /></label>
+            <label><span>Email</span><input [(ngModel)]="vendorDraft.email" /></label>
+            <label><span>Lead time days</span><input [(ngModel)]="vendorDraft.lead_time_days" type="number" min="1" /></label>
+            <label><span>Status</span><input [(ngModel)]="vendorDraft.status" /></label>
+            <label><span>Annual spend</span><input [(ngModel)]="vendorDraft.annual_spend" type="number" min="0" /></label>
+          </div>
+          <div class="form-actions">
+            <button type="button" (click)="createVendor()" [disabled]="vendorSaving">{{ vendorSaving ? 'Saving...' : 'Add vendor' }}</button>
+          </div>
+        </article>
+
+        <div class="purchase-grid">
+          <article class="panel-card purchase-card" *ngFor="let vendor of vendors; trackBy: trackById">
+            <div class="purchase-topline">
+              <strong>{{ vendor.name }}</strong>
+              <span>{{ vendor.vendor_code }}</span>
+            </div>
+            <div class="purchase-detail-grid">
+              <div><span>Category</span><strong>{{ vendor.category }}</strong></div>
+              <div><span>Region</span><strong>{{ vendor.region }}</strong></div>
+              <div><span>Contact</span><strong>{{ vendor.contact_name }}</strong></div>
+              <div><span>Lead time</span><strong>{{ vendor.lead_time }}</strong></div>
+              <div><span>Status</span><strong>{{ vendor.status }}</strong></div>
+              <div><span>Annual spend</span><strong>{{ vendor.annual_spend }}</strong></div>
+            </div>
+            <div class="purchase-copy">{{ vendor.email || 'No vendor email yet.' }}</div>
+          </article>
+        </div>
+      </section>
+
+      <section *ngSwitchDefault class="purchase-section">
+        <div class="workspace-state-card">Purchase workspace for {{ tabName() }} is ready.</div>
+      </section>
+    </ng-container>
+  </ng-container>
+</section>

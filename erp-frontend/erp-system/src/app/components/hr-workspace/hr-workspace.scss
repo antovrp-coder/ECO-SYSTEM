@@ -1,0 +1,293 @@
+.hr-shell {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.workspace-state-card {
+  border: 1px solid var(--app-border);
+  border-radius: 20px;
+  padding: 1.2rem 1.4rem;
+  background: color-mix(in srgb, var(--app-surface) 88%, white);
+}
+
+.workspace-state-card.compact-state {
+  padding: 0.9rem 1rem;
+}
+
+.workspace-state-card.error {
+  border-color: color-mix(in srgb, #cf4c4c 45%, var(--app-border));
+}
+
+.hr-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.9fr);
+  gap: 1rem;
+  border-radius: 28px;
+  padding: 1.6rem;
+  background:
+    radial-gradient(circle at top left, rgba(77, 162, 123, 0.18), transparent 34%),
+    linear-gradient(135deg, color-mix(in srgb, var(--app-accent) 16%, white), color-mix(in srgb, var(--app-surface) 92%, black 3%));
+  border: 1px solid color-mix(in srgb, var(--app-accent) 26%, var(--app-border));
+}
+
+.hr-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  opacity: 0.74;
+}
+
+.hr-hero h2 {
+  margin: 0.35rem 0 0.5rem;
+  font-size: clamp(1.85rem, 2vw, 2.4rem);
+}
+
+.hr-hero p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.hr-metrics,
+.overview-grid,
+.overview-stack,
+.employee-grid,
+.leave-grid,
+.payroll-grid,
+.attendance-grid,
+.form-grid,
+.employee-detail-grid {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.hr-metrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.panel-card,
+.hr-metrics article {
+  border: 1px solid var(--app-border);
+  border-radius: 22px;
+  padding: 1rem 1.1rem;
+  background: color-mix(in srgb, var(--app-surface) 90%, white);
+}
+
+.hr-metrics span,
+.panel-header span,
+.employee-meta,
+.employee-card span,
+.leave-card span,
+.payroll-notes {
+  color: var(--app-text-muted, rgba(0, 0, 0, 0.66));
+}
+
+.hr-metrics strong {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 1.2rem;
+}
+
+.hr-section {
+  display: grid;
+  gap: 1rem;
+}
+
+.panel-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.panel-header.compact {
+  margin-bottom: 0.8rem;
+}
+
+.panel-header h3 {
+  margin: 0;
+}
+
+.form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.compact-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.form-grid label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.86rem;
+}
+
+.form-grid input,
+.form-grid select,
+.form-grid textarea {
+  width: 100%;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  padding: 0.8rem 0.9rem;
+  background: color-mix(in srgb, var(--app-surface) 94%, white);
+  color: inherit;
+  font: inherit;
+}
+
+.form-grid textarea {
+  resize: vertical;
+  min-height: 5.5rem;
+}
+
+.full-span {
+  grid-column: 1 / -1;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.form-actions button,
+.selection-chip {
+  border: 1px solid color-mix(in srgb, var(--app-accent) 20%, var(--app-border));
+  border-radius: 14px;
+  padding: 0.65rem 0.9rem;
+  background: color-mix(in srgb, var(--app-accent) 10%, var(--app-surface));
+  color: inherit;
+  cursor: pointer;
+}
+
+.form-actions button {
+  background: var(--app-accent);
+  color: white;
+  border: 0;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.selection-chip.active {
+  background: var(--app-accent);
+  color: white;
+}
+
+.overview-grid,
+.employee-grid,
+.leave-grid,
+.payroll-grid,
+.attendance-grid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.overview-card {
+  align-content: start;
+}
+
+.overview-stack {
+  gap: 0.8rem;
+}
+
+.overview-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.8rem 0.9rem;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--app-accent) 6%, var(--app-surface));
+}
+
+.overview-row div {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.metric-grid {
+  margin-top: 0;
+}
+
+.status-pill {
+  min-width: 7.2rem;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 18%, var(--app-border));
+  border-radius: 18px;
+  padding: 0.8rem 0.9rem;
+  background: color-mix(in srgb, var(--app-accent) 8%, var(--app-surface));
+}
+
+.status-pill strong,
+.status-pill span {
+  display: block;
+}
+
+.leave-card .chip-row {
+  margin-top: 1rem;
+}
+
+.employee-topline {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.employee-detail-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 0.9rem;
+}
+
+.employee-detail-grid div,
+.employee-manager {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.employee-detail-grid span,
+.employee-manager {
+  font-size: 0.82rem;
+}
+
+.employee-card strong,
+.payroll-card strong,
+.attendance-card strong {
+  font-size: 1rem;
+}
+
+.payroll-notes,
+.employee-manager {
+  margin-top: 0.9rem;
+}
+
+@media (max-width: 980px) {
+  .hr-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .hr-metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .form-grid,
+  .compact-grid,
+  .employee-detail-grid,
+  .hr-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .employee-topline,
+  .overview-row,
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+}

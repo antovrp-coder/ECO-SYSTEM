@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 1080" role="img" aria-labelledby="title desc">
+  <title id="title">Nimbus Desk Lamp desk image</title>
+  <desc id="desc">Lamp styled on a writing desk with focused task lighting.</desc>
+  <rect width="960" height="1080" fill="#fcf2f7"/>
+  <rect x="0" y="682" width="960" height="398" fill="#efe2d3"/>
+  <rect x="144" y="620" width="672" height="92" rx="28" fill="#b78f73"/>
+  <rect x="440" y="362" width="42" height="298" rx="21" fill="#664b53"/>
+  <path d="M460 392c48-118 122-186 240-212" fill="none" stroke="#7a5b63" stroke-width="24" stroke-linecap="round"/>
+  <path d="M616 172h146c26 0 48 22 48 48v98H600v-98c0-26 20-48 46-48z" fill="#d79f64"/>
+  <circle cx="712" cy="450" r="96" fill="#f5d48a" fill-opacity="0.58"/>
+  <rect x="258" y="482" width="126" height="152" rx="16" fill="#ffffff" fill-opacity="0.86"/>
+  <text x="118" y="142" font-family="Segoe UI, Arial, sans-serif" font-size="38" font-weight="700" fill="#58424c">Warm desk-side task light</text>
+</svg>

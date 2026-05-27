@@ -1,0 +1,158 @@
+<section class="inventory-shell">
+  <div *ngIf="loading" class="workspace-state-card">
+    Loading inventory workspace...
+  </div>
+
+  <div *ngIf="!loading && error" class="workspace-state-card error">
+    {{ error }}
+  </div>
+
+  <ng-container *ngIf="!loading && !error">
+    <section class="inventory-hero">
+      <div>
+        <div class="inventory-kicker">Operations Control</div>
+        <h2>{{ tabName() }}</h2>
+        <p>Inventory control for replenishment, supplier coverage, and stock risk across active fulfillment points.</p>
+      </div>
+      <div class="inventory-metrics">
+        <article>
+          <span>Active SKUs</span>
+          <strong>{{ skuCount }}</strong>
+        </article>
+        <article>
+          <span>At-risk SKUs</span>
+          <strong>{{ atRiskCount }}</strong>
+        </article>
+        <article>
+          <span>Inbound units</span>
+          <strong>{{ inboundUnits }}</strong>
+        </article>
+        <article>
+          <span>Suppliers</span>
+          <strong>{{ supplierCount }}</strong>
+        </article>
+      </div>
+    </section>
+
+    <ng-container [ngSwitch]="tabName()">
+      <section *ngSwitchCase="'Stock'" class="inventory-section">
+        <article class="panel-card form-card">
+          <div class="panel-header compact">
+            <h3>Add stock item</h3>
+            <span>{{ items.length }} items tracked</span>
+          </div>
+          <div class="form-grid">
+            <label><span>SKU</span><input [(ngModel)]="itemDraft.sku" /></label>
+            <label><span>Name</span><input [(ngModel)]="itemDraft.name" /></label>
+            <label><span>Category</span><input [(ngModel)]="itemDraft.category" /></label>
+            <label><span>Warehouse</span><input [(ngModel)]="itemDraft.warehouse" /></label>
+            <label><span>Supplier</span><input [(ngModel)]="itemDraft.supplier_name" /></label>
+            <label><span>Status</span><input [(ngModel)]="itemDraft.status" /></label>
+            <label><span>Reorder point</span><input [(ngModel)]="itemDraft.reorder_point" type="number" min="0" /></label>
+            <label><span>On hand</span><input [(ngModel)]="itemDraft.on_hand" type="number" min="0" /></label>
+            <label><span>Reserved</span><input [(ngModel)]="itemDraft.reserved" type="number" min="0" /></label>
+            <label><span>Incoming</span><input [(ngModel)]="itemDraft.incoming" type="number" min="0" /></label>
+            <label><span>Unit cost</span><input [(ngModel)]="itemDraft.unit_cost" type="number" min="0" /></label>
+          </div>
+          <div class="form-actions">
+            <button type="button" (click)="createItem()" [disabled]="itemSaving">{{ itemSaving ? 'Saving...' : 'Add stock item' }}</button>
+          </div>
+        </article>
+
+        <article class="panel-card filter-card">
+          <div class="panel-header compact">
+            <h3>Category filter</h3>
+            <span>{{ filteredItems.length }} visible</span>
+          </div>
+          <div class="chip-row">
+            <button type="button" *ngFor="let category of categories" class="selection-chip" [class.active]="categoryFilter === category" (click)="categoryFilter = category">{{ category }}</button>
+          </div>
+        </article>
+
+        <div class="inventory-grid">
+          <article class="inventory-card panel-card" *ngFor="let item of filteredItems; trackBy: trackById">
+            <div class="inventory-topline">
+              <strong>{{ item.name }}</strong>
+              <span>{{ item.sku }}</span>
+            </div>
+            <div class="inventory-meta">{{ item.category }} • {{ item.warehouse }}</div>
+            <div class="inventory-detail-grid">
+              <div><span>Status</span><strong>{{ item.status }}</strong></div>
+              <div><span>Available</span><strong>{{ item.available }}</strong></div>
+              <div><span>On hand</span><strong>{{ item.on_hand }}</strong></div>
+              <div><span>Reserved</span><strong>{{ item.reserved }}</strong></div>
+              <div><span>Incoming</span><strong>{{ item.incoming }}</strong></div>
+              <div><span>Value</span><strong>{{ item.stock_value }}</strong></div>
+            </div>
+            <div class="inventory-meta">Supplier: {{ item.supplier_name }} • Reorder at {{ item.reorder_point }}</div>
+            <div class="chip-row compact-actions">
+              <button type="button" class="selection-chip" [disabled]="adjustingItemId === item.id" (click)="adjustOnHand(item, -1)">-1 on hand</button>
+              <button type="button" class="selection-chip" [disabled]="adjustingItemId === item.id" (click)="adjustOnHand(item, 1)">+1 on hand</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section *ngSwitchCase="'Suppliers'" class="inventory-section suppliers-layout">
+        <article class="panel-card form-card">
+          <div class="panel-header compact">
+            <h3>Add supplier</h3>
+            <span>{{ suppliers.length }} supplier relationships</span>
+          </div>
+          <div class="form-grid compact-grid">
+            <label><span>Name</span><input [(ngModel)]="supplierDraft.name" /></label>
+            <label><span>Contact</span><input [(ngModel)]="supplierDraft.contact_name" /></label>
+            <label><span>Email</span><input [(ngModel)]="supplierDraft.email" /></label>
+            <label><span>Region</span><input [(ngModel)]="supplierDraft.region" /></label>
+            <label><span>Lead time days</span><input [(ngModel)]="supplierDraft.lead_time_days" type="number" min="1" /></label>
+            <label><span>Status</span><input [(ngModel)]="supplierDraft.status" /></label>
+            <label><span>Payment terms</span><input [(ngModel)]="supplierDraft.payment_terms" /></label>
+            <label><span>Reliability</span><input [(ngModel)]="supplierDraft.reliability_score" type="number" min="1" max="100" /></label>
+            <label class="full-span"><span>Notes</span><input [(ngModel)]="supplierDraft.notes" /></label>
+          </div>
+          <div class="form-actions">
+            <button type="button" (click)="createSupplier()" [disabled]="supplierSaving">{{ supplierSaving ? 'Saving...' : 'Add supplier' }}</button>
+          </div>
+        </article>
+
+        <div class="supplier-grid">
+          <article class="panel-card supplier-card" *ngFor="let supplier of suppliers; trackBy: trackById">
+            <div class="inventory-topline">
+              <strong>{{ supplier.name }}</strong>
+              <span>{{ supplier.reliability_score }}/100</span>
+            </div>
+            <div class="inventory-detail-grid">
+              <div><span>Contact</span><strong>{{ supplier.contact_name }}</strong></div>
+              <div><span>Region</span><strong>{{ supplier.region }}</strong></div>
+              <div><span>Lead time</span><strong>{{ supplier.lead_time_days }} days</strong></div>
+              <div><span>Terms</span><strong>{{ supplier.payment_terms }}</strong></div>
+              <div><span>Status</span><strong>{{ supplier.status }}</strong></div>
+              <div><span>Email</span><strong>{{ supplier.email || 'Not set' }}</strong></div>
+            </div>
+            <div class="supplier-notes">{{ supplier.notes || 'No notes yet.' }}</div>
+          </article>
+        </div>
+      </section>
+
+      <section *ngSwitchCase="'Reports'" class="inventory-section report-grid">
+        <article class="panel-card report-card" *ngFor="let report of reports; trackBy: trackById">
+          <div class="inventory-topline">
+            <strong>{{ report.name }}</strong>
+            <span>{{ report.window_label }}</span>
+          </div>
+          <div class="inventory-detail-grid">
+            <div><span>Fill rate</span><strong>{{ report.fill_rate }}</strong></div>
+            <div><span>Inventory value</span><strong>{{ report.inventory_value }}</strong></div>
+            <div><span>Stock cover</span><strong>{{ report.stock_cover_days }}</strong></div>
+            <div><span>Risk SKUs</span><strong>{{ report.risk_skus }}</strong></div>
+          </div>
+          <div class="supplier-notes">{{ report.summary }}</div>
+        </article>
+      </section>
+
+      <section *ngSwitchDefault class="inventory-section">
+        <div class="workspace-state-card">Inventory workspace for {{ tabName() }} is ready.</div>
+      </section>
+    </ng-container>
+  </ng-container>
+</section>

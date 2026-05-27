@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 1080" role="img" aria-labelledby="title desc">
+  <title id="title">Urban Carry Sling angle image</title>
+  <desc id="desc">Angled product frame showing the sling hardware and side profile.</desc>
+  <rect width="960" height="1080" fill="#faf5ff"/>
+  <g transform="translate(160 180) rotate(-12 320 300)">
+    <ellipse cx="366" cy="654" rx="226" ry="54" fill="#eadcfb"/>
+    <path d="M228 188c28-90 106-148 208-148 90 0 170 52 208 136" fill="none" stroke="#9382b4" stroke-width="24" stroke-linecap="round"/>
+    <rect x="126" y="224" width="492" height="316" rx="124" fill="#352b4f"/>
+    <rect x="180" y="308" width="390" height="112" rx="56" fill="#56486f"/>
+    <rect x="252" y="468" width="254" height="42" rx="21" fill="#8974ab"/>
+    <circle cx="574" cy="378" r="16" fill="#f2bb63"/>
+  </g>
+  <text x="108" y="146" font-family="Segoe UI, Arial, sans-serif" font-size="38" font-weight="700" fill="#3a3050">Adjustable strap and quick-access pockets</text>
+</svg>

@@ -1,0 +1,353 @@
+.pos-shell {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.workspace-state-card {
+  border: 1px solid var(--app-border);
+  border-radius: 20px;
+  padding: 1.25rem 1.5rem;
+  background: color-mix(in srgb, var(--app-surface) 82%, white);
+}
+
+.workspace-state-card.error {
+  border-color: color-mix(in srgb, #cf4c4c 50%, var(--app-border));
+}
+
+.pos-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
+  gap: 1rem;
+  border-radius: 28px;
+  padding: 1.6rem;
+  background:
+    radial-gradient(circle at top left, rgba(244, 183, 91, 0.24), transparent 34%),
+    linear-gradient(135deg, color-mix(in srgb, var(--app-accent) 20%, white), color-mix(in srgb, var(--app-surface) 88%, black 4%));
+  border: 1px solid color-mix(in srgb, var(--app-accent) 30%, var(--app-border));
+}
+
+.pos-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  opacity: 0.72;
+}
+
+.pos-hero h2 {
+  margin: 0.35rem 0 0.5rem;
+  font-size: clamp(1.9rem, 2vw, 2.5rem);
+}
+
+.pos-hero p {
+  margin: 0;
+  max-width: 42rem;
+  line-height: 1.5;
+}
+
+.pos-hero-metrics {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.pos-hero-metrics article,
+.panel-card {
+  border: 1px solid var(--app-border);
+  border-radius: 22px;
+  padding: 1rem 1.1rem;
+  background: color-mix(in srgb, var(--app-surface) 88%, white);
+}
+
+.pos-hero-metrics span,
+.panel-header span,
+.status-copy,
+.empty-cart-state,
+.recent-order span,
+.selection-chip small {
+  color: var(--app-text-muted, rgba(0, 0, 0, 0.65));
+}
+
+.pos-hero-metrics strong {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 1.2rem;
+}
+
+.pos-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.95fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.pos-catalog-column,
+.pos-checkout-column {
+  display: grid;
+  gap: 1rem;
+}
+
+.panel-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.panel-header.compact {
+  margin-bottom: 0.85rem;
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.pos-toolbar-grid,
+.customer-form-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.pos-toolbar-grid {
+  grid-template-columns: minmax(0, 1.4fr) minmax(180px, 0.7fr);
+}
+
+.pos-toolbar-grid input,
+.pos-toolbar-grid select,
+.customer-form-grid input {
+  width: 100%;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  padding: 0.8rem 0.9rem;
+  background: color-mix(in srgb, var(--app-surface) 92%, white);
+  color: inherit;
+}
+
+.pos-product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.9rem;
+}
+
+.pos-product-card {
+  border: 1px solid var(--app-border);
+  border-radius: 20px;
+  padding: 1rem;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--app-accent) 12%, white), transparent 34%),
+    color-mix(in srgb, var(--app-surface) 94%, white);
+}
+
+.pos-product-card h3 {
+  margin: 0.7rem 0 0.25rem;
+  font-size: 1.02rem;
+}
+
+.pos-product-topline,
+.pos-product-footer,
+.checkout-summary,
+.recent-order,
+.cart-line,
+.cart-line-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.pos-product-meta {
+  margin-bottom: 1rem;
+  font-size: 0.92rem;
+  opacity: 0.74;
+}
+
+.stock-pill {
+  border-radius: 999px;
+  padding: 0.18rem 0.55rem;
+  font-size: 0.76rem;
+  background: rgba(52, 141, 112, 0.16);
+}
+
+.stock-pill.low {
+  background: rgba(237, 192, 102, 0.2);
+}
+
+.stock-pill.empty {
+  background: rgba(207, 76, 76, 0.16);
+}
+
+.pos-product-card button,
+.checkout-actions button,
+.selection-chip,
+.cart-line-actions button {
+  border: 0;
+  border-radius: 14px;
+  padding: 0.65rem 0.9rem;
+  background: var(--app-accent);
+  color: white;
+  cursor: pointer;
+}
+
+.pos-product-card button[disabled],
+.checkout-actions button[disabled] {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.selection-chip,
+.cart-line-actions button,
+.checkout-actions .ghost {
+  background: color-mix(in srgb, var(--app-accent) 14%, var(--app-surface));
+  color: inherit;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 20%, var(--app-border));
+}
+
+.selection-chip.active {
+  background: var(--app-accent);
+  color: white;
+}
+
+.selection-chip.small {
+  text-transform: capitalize;
+}
+
+.customer-form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 1rem;
+}
+
+.customer-form-grid label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.full-span {
+  grid-column: 1 / -1;
+}
+
+.payment-group {
+  margin-bottom: 1rem;
+}
+
+.section-label {
+  margin-bottom: 0.55rem;
+  font-size: 0.84rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.74;
+}
+
+.chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.selection-chip {
+  display: grid;
+  gap: 0.12rem;
+  text-align: left;
+}
+
+.cart-lines {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.cart-line {
+  align-items: flex-start;
+  border: 1px solid var(--app-border);
+  border-radius: 16px;
+  padding: 0.85rem 0.9rem;
+}
+
+.cart-line > div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.cart-line-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.cart-line-actions button {
+  padding: 0.35rem 0.55rem;
+}
+
+.cart-line-actions .ghost {
+  padding-inline: 0.7rem;
+}
+
+.empty-cart-state,
+.receipt-banner {
+  border: 1px dashed color-mix(in srgb, var(--app-accent) 34%, var(--app-border));
+  border-radius: 16px;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--app-accent) 7%, var(--app-surface));
+}
+
+.checkout-summary {
+  margin: 1rem 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--app-border);
+}
+
+.checkout-summary div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.checkout-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.7rem;
+}
+
+.recent-orders-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.recent-order {
+  border: 1px solid var(--app-border);
+  border-radius: 16px;
+  padding: 0.85rem 0.95rem;
+}
+
+.recent-order > div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+@media (max-width: 1120px) {
+  .pos-hero,
+  .pos-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .pos-toolbar-grid,
+  .customer-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .recent-order,
+  .checkout-actions,
+  .cart-line,
+  .cart-line-actions,
+  .pos-product-topline,
+  .pos-product-footer,
+  .checkout-summary {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .checkout-actions button,
+  .pos-product-card button {
+    width: 100%;
+  }
+}

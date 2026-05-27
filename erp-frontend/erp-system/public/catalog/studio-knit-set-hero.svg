@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 1080" role="img" aria-labelledby="title desc">
+  <title id="title">Studio Knit Set hero image</title>
+  <desc id="desc">Soft knit cardigan and trouser set in an editorial catalog frame.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fbf4ea"/>
+      <stop offset="100%" stop-color="#f7edf5"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="1080" fill="url(#bg)"/>
+  <ellipse cx="482" cy="904" rx="236" ry="56" fill="#eadcd7"/>
+  <path d="M336 206l144 92 144-92 74 110-58 72v220c0 88-72 160-160 160s-160-72-160-160V388l-58-72 74-110z" fill="#b48f79"/>
+  <rect x="438" y="336" width="84" height="246" rx="20" fill="#c6a693"/>
+  <path d="M380 626h200v238H380z" fill="#9d7b68"/>
+  <text x="96" y="142" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700" fill="#6f5344">Studio Knit Set</text>
+  <text x="96" y="190" font-family="Segoe UI, Arial, sans-serif" font-size="24" fill="#8a6a5b">Soft lounge tailoring with layered texture</text>
+</svg>

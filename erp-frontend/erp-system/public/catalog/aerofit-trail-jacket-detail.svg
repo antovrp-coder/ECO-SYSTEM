@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 1080" role="img" aria-labelledby="title desc">
+  <title id="title">AeroFit Trail Jacket detail image</title>
+  <desc id="desc">Close-up catalog frame showing the jacket zipper and panel seams.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f6f9fc"/>
+      <stop offset="100%" stop-color="#dfeaf4"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="1080" fill="url(#bg)"/>
+  <rect x="184" y="138" width="592" height="804" rx="56" fill="#ffffff" fill-opacity="0.72"/>
+  <path d="M338 276h284l76 142-68 76v252c0 56-46 102-102 102H432c-56 0-102-46-102-102V494l-68-76 76-142z" fill="#253b58"/>
+  <rect x="468" y="322" width="24" height="448" rx="12" fill="#f3b351"/>
+  <path d="M392 352h176" stroke="#7f94ac" stroke-width="10" stroke-linecap="round"/>
+  <path d="M392 414h176" stroke="#7f94ac" stroke-width="10" stroke-linecap="round"/>
+  <path d="M392 476h176" stroke="#7f94ac" stroke-width="10" stroke-linecap="round"/>
+  <text x="96" y="132" font-family="Segoe UI, Arial, sans-serif" font-size="40" font-weight="700" fill="#1c3048">Weather sealed front zip</text>
+</svg>

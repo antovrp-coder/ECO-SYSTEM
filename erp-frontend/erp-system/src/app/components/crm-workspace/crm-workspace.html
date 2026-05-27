@@ -1,0 +1,157 @@
+<section class="crm-shell">
+  <div *ngIf="loading" class="workspace-state-card">
+    Loading CRM workspace...
+  </div>
+
+  <div *ngIf="!loading && error" class="workspace-state-card error">
+    {{ error }}
+  </div>
+
+  <ng-container *ngIf="!loading && !error">
+    <section class="crm-hero">
+      <div>
+        <div class="crm-kicker">Revenue Operations</div>
+        <h2>{{ tabName() }}</h2>
+        <p>CRM coverage for pipeline health, account stewardship, and lead progression across the active sales motion.</p>
+      </div>
+      <div class="crm-metrics">
+        <article *ngFor="let metric of overviewMetrics; trackBy: trackByMetric">
+          <span>{{ metric.label }}</span>
+          <strong>{{ metric.value }}</strong>
+          <em>{{ metric.delta }}</em>
+        </article>
+      </div>
+    </section>
+
+    <ng-container [ngSwitch]="tabName()">
+      <section *ngSwitchCase="'Overview'" class="crm-section overview-grid">
+        <article class="panel-card overview-card" *ngFor="let metric of overviewMetrics; let index = index; trackBy: trackByMetric">
+          <div class="crm-topline">
+            <strong>{{ metric.label }}</strong>
+            <span>{{ metric.delta }}</span>
+          </div>
+          <div class="overview-value">{{ metric.value }}</div>
+          <div class="crm-copy">{{ metric.copy }}</div>
+        </article>
+      </section>
+
+      <section *ngSwitchCase="'Leads'" class="crm-section">
+        <article class="panel-card form-card">
+          <div class="panel-header compact">
+            <h3>Add lead</h3>
+            <span>{{ leadCount }} active leads</span>
+          </div>
+          <div class="form-grid">
+            <label><span>Lead code</span><input [(ngModel)]="leadDraft.lead_code" /></label>
+            <label><span>Company</span><input [(ngModel)]="leadDraft.company_name" /></label>
+            <label><span>Contact</span><input [(ngModel)]="leadDraft.contact_name" /></label>
+            <label><span>Email</span><input [(ngModel)]="leadDraft.email" /></label>
+            <label><span>Segment</span><input [(ngModel)]="leadDraft.segment" /></label>
+            <label><span>Stage</span><input [(ngModel)]="leadDraft.stage" /></label>
+            <label><span>Owner</span><input [(ngModel)]="leadDraft.owner_name" /></label>
+            <label><span>Estimated value</span><input [(ngModel)]="leadDraft.estimated_value" type="number" min="0" /></label>
+            <label><span>Last touch</span><input [(ngModel)]="leadDraft.last_touch_label" /></label>
+            <label class="full-span"><span>Next step</span><input [(ngModel)]="leadDraft.next_step" /></label>
+          </div>
+          <div class="form-actions">
+            <button type="button" (click)="createLead()" [disabled]="leadSaving">{{ leadSaving ? 'Saving...' : 'Add lead' }}</button>
+          </div>
+        </article>
+
+        <div class="crm-grid">
+          <article class="panel-card crm-card" *ngFor="let lead of leads; trackBy: trackById">
+            <div class="crm-topline">
+              <strong>{{ lead.company_name }}</strong>
+              <span>{{ lead.lead_code }}</span>
+            </div>
+            <div class="crm-copy">{{ lead.contact_name }} • {{ lead.segment }} • {{ lead.stage }}</div>
+            <div class="crm-detail-grid">
+              <div><span>Owner</span><strong>{{ lead.owner_name }}</strong></div>
+              <div><span>Value</span><strong>{{ lead.estimated_value }}</strong></div>
+              <div><span>Last touch</span><strong>{{ lead.last_touch_label }}</strong></div>
+              <div><span>Email</span><strong>{{ lead.email || 'Not set' }}</strong></div>
+            </div>
+            <div class="crm-copy">Next: {{ lead.next_step }}</div>
+          </article>
+        </div>
+      </section>
+
+      <section *ngSwitchCase="'Accounts'" class="crm-section">
+        <article class="panel-card form-card">
+          <div class="panel-header compact">
+            <h3>Add account</h3>
+            <span>{{ accountCount }} managed accounts</span>
+          </div>
+          <div class="form-grid compact-grid">
+            <label><span>Account code</span><input [(ngModel)]="accountDraft.account_code" /></label>
+            <label><span>Name</span><input [(ngModel)]="accountDraft.name" /></label>
+            <label><span>Tier</span><input [(ngModel)]="accountDraft.tier" /></label>
+            <label><span>Industry</span><input [(ngModel)]="accountDraft.industry" /></label>
+            <label><span>Region</span><input [(ngModel)]="accountDraft.region" /></label>
+            <label><span>Owner</span><input [(ngModel)]="accountDraft.owner_name" /></label>
+            <label><span>Renewal window</span><input [(ngModel)]="accountDraft.renewal_window" /></label>
+            <label><span>Health</span><input [(ngModel)]="accountDraft.health_status" /></label>
+            <label><span>Annual value</span><input [(ngModel)]="accountDraft.annual_value" type="number" min="0" /></label>
+          </div>
+          <div class="form-actions">
+            <button type="button" (click)="createAccount()" [disabled]="accountSaving">{{ accountSaving ? 'Saving...' : 'Add account' }}</button>
+          </div>
+        </article>
+
+        <div class="crm-grid">
+          <article class="panel-card crm-card" *ngFor="let account of accounts; trackBy: trackById">
+            <div class="crm-topline">
+              <strong>{{ account.name }}</strong>
+              <span>{{ account.account_code }}</span>
+            </div>
+            <div class="crm-detail-grid">
+              <div><span>Tier</span><strong>{{ account.tier }}</strong></div>
+              <div><span>Industry</span><strong>{{ account.industry }}</strong></div>
+              <div><span>Region</span><strong>{{ account.region }}</strong></div>
+              <div><span>Owner</span><strong>{{ account.owner_name }}</strong></div>
+              <div><span>Renewal</span><strong>{{ account.renewal_window || 'TBD' }}</strong></div>
+              <div><span>Health</span><strong>{{ account.health_status }}</strong></div>
+            </div>
+            <div class="crm-copy">Annual value: {{ account.annual_value }}</div>
+          </article>
+        </div>
+      </section>
+
+      <section *ngSwitchCase="'Pipeline'" class="crm-section">
+        <article class="panel-card filter-card">
+          <div class="panel-header compact">
+            <h3>Pipeline focus</h3>
+            <span>{{ highConfidenceDeals }} high-confidence deals</span>
+          </div>
+          <div class="chip-row">
+            <button type="button" *ngFor="let owner of owners" class="selection-chip" [class.active]="ownerFilter === owner" (click)="ownerFilter = owner">{{ owner }}</button>
+          </div>
+        </article>
+
+        <div class="crm-grid">
+          <article class="panel-card crm-card" *ngFor="let deal of filteredDeals; trackBy: trackById">
+            <div class="crm-topline">
+              <strong>{{ deal.account_name }}</strong>
+              <span>{{ deal.deal_code }}</span>
+            </div>
+            <div class="crm-copy">{{ deal.stage }} • {{ deal.forecast_category }} • {{ deal.owner_name }}</div>
+            <div class="crm-detail-grid">
+              <div><span>Value</span><strong>{{ deal.value }}</strong></div>
+              <div><span>Probability</span><strong>{{ deal.probability }}</strong></div>
+              <div><span>Close date</span><strong>{{ deal.close_date }}</strong></div>
+              <div><span>Owner</span><strong>{{ deal.owner_name }}</strong></div>
+            </div>
+            <div class="chip-row">
+              <button type="button" class="selection-chip" *ngFor="let stage of crmStages" [class.active]="deal.stage === stage" [disabled]="updatingDealId === deal.id" (click)="updateDealStage(deal, stage)">{{ stage }}</button>
+            </div>
+            <div class="crm-copy">{{ deal.summary }}</div>
+          </article>
+        </div>
+      </section>
+
+      <section *ngSwitchDefault class="crm-section">
+        <div class="workspace-state-card">CRM workspace for {{ tabName() }} is ready.</div>
+      </section>
+    </ng-container>
+  </ng-container>
+</section>

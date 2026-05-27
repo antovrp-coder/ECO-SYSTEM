@@ -1,0 +1,191 @@
+<section class="pos-shell">
+  <div *ngIf="loading" class="workspace-state-card">
+    Loading POS workspace...
+  </div>
+
+  <div *ngIf="!loading && error" class="workspace-state-card error">
+    {{ error }}
+  </div>
+
+  <ng-container *ngIf="!loading && !error">
+    <section class="pos-hero">
+      <div>
+        <div class="pos-kicker">Sales Module</div>
+        <h2>POS Terminal</h2>
+        <p>Fast counter sales, live catalog search, and same-session checkout with recent receipts on the right rail.</p>
+      </div>
+      <div class="pos-hero-metrics">
+        <article>
+          <span>Items in ticket</span>
+          <strong>{{ cartItemCount }}</strong>
+        </article>
+        <article>
+          <span>Ticket value</span>
+          <strong>{{ formatCurrency(cartSubtotal) }}</strong>
+        </article>
+        <article>
+          <span>Payment rail</span>
+          <strong>{{ selectedPaymentOption?.label || 'Choose one' }}</strong>
+        </article>
+      </div>
+    </section>
+
+    <section class="pos-layout">
+      <div class="pos-catalog-column">
+        <article class="panel-card pos-toolbar-card">
+          <div class="panel-header compact">
+            <h3>Catalog search</h3>
+            <span>{{ filteredProducts.length }} available SKUs</span>
+          </div>
+          <div class="pos-toolbar-grid">
+            <input [(ngModel)]="productSearch" placeholder="Search SKU, name, or category" />
+            <select [(ngModel)]="selectedCategory" aria-label="Filter product category">
+              <option *ngFor="let category of categories" [ngValue]="category">{{ category }}</option>
+            </select>
+          </div>
+        </article>
+
+        <div class="pos-product-grid">
+          <article class="pos-product-card" *ngFor="let product of filteredProducts; trackBy: trackById">
+            <div class="pos-product-topline">
+              <span>{{ product.sku }}</span>
+              <span class="stock-pill" [class.low]="product.stock < 35" [class.empty]="product.stock === 0">{{ product.stock }} in stock</span>
+            </div>
+            <h3>{{ product.name }}</h3>
+            <div class="pos-product-meta">{{ product.category }}</div>
+            <div class="pos-product-footer">
+              <div>
+                <strong>{{ product.price }}</strong>
+                <div class="status-copy">{{ product.status }}</div>
+              </div>
+              <button type="button" (click)="addProduct(product)" [disabled]="product.stock === 0">Add</button>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <aside class="pos-checkout-column">
+        <article class="panel-card checkout-card">
+          <div class="panel-header compact">
+            <h3>Customer and payment</h3>
+            <span>{{ cartItemCount }} items</span>
+          </div>
+
+          <div class="customer-form-grid">
+            <label>
+              <span>Customer name</span>
+              <input [(ngModel)]="customer.fullName" />
+            </label>
+            <label>
+              <span>Email</span>
+              <input [(ngModel)]="customer.email" type="email" />
+            </label>
+            <label>
+              <span>Phone</span>
+              <input [(ngModel)]="customer.phone" />
+            </label>
+            <label>
+              <span>City</span>
+              <input [(ngModel)]="customer.city" />
+            </label>
+            <label class="full-span">
+              <span>Address</span>
+              <input [(ngModel)]="customer.address" />
+            </label>
+          </div>
+
+          <div class="payment-group">
+            <div class="section-label">Payment provider</div>
+            <div class="chip-grid">
+              <button
+                type="button"
+                class="selection-chip"
+                *ngFor="let provider of paymentProviders; trackBy: trackByStringId"
+                [class.active]="provider.id === selectedPaymentProvider"
+                (click)="selectPaymentProvider(provider.id)">
+                <span>{{ provider.label }}</span>
+                <small>{{ provider.status }}</small>
+              </button>
+            </div>
+          </div>
+
+          <div class="payment-group" *ngIf="supportedPaymentMethods.length > 0">
+            <div class="section-label">Tender</div>
+            <div class="chip-grid method-grid">
+              <button
+                type="button"
+                class="selection-chip small"
+                *ngFor="let method of supportedPaymentMethods"
+                [class.active]="method === paymentMethod"
+                (click)="paymentMethod = method">
+                {{ method | titlecase }}
+              </button>
+            </div>
+          </div>
+
+          <div class="cart-lines" *ngIf="cart.length > 0; else emptyCartState">
+            <article class="cart-line" *ngFor="let item of cart; trackBy: trackByProductId">
+              <div>
+                <strong>{{ item.name }}</strong>
+                <span>{{ item.sku }} • {{ item.priceLabel }}</span>
+              </div>
+              <div class="cart-line-actions">
+                <button type="button" (click)="updateQuantity(item, item.quantity - 1)">-</button>
+                <span>{{ item.quantity }}</span>
+                <button type="button" (click)="updateQuantity(item, item.quantity + 1)">+</button>
+                <button type="button" class="ghost" (click)="removeItem(item.productId)">Remove</button>
+              </div>
+            </article>
+          </div>
+
+          <ng-template #emptyCartState>
+            <div class="empty-cart-state">Select products from the left to start a POS ticket.</div>
+          </ng-template>
+
+          <div class="checkout-summary">
+            <div>
+              <span>Subtotal</span>
+              <strong>{{ formatCurrency(cartSubtotal) }}</strong>
+            </div>
+            <div>
+              <span>Channel</span>
+              <strong>POS Terminal</strong>
+            </div>
+          </div>
+
+          <div *ngIf="receiptMessage" class="receipt-banner">{{ receiptMessage }}</div>
+
+          <div class="checkout-actions">
+            <button type="button" class="ghost" (click)="clearSale()" [disabled]="cart.length === 0 || submitting">Clear</button>
+            <button type="button" (click)="completeSale()" [disabled]="submitting || cart.length === 0">
+              {{ submitting ? 'Processing...' : 'Take payment' }}
+            </button>
+          </div>
+        </article>
+      </aside>
+    </section>
+
+    <article class="panel-card recent-orders-card">
+      <div class="panel-header">
+        <h3>Recent receipts</h3>
+        <span>Latest cross-channel orders including POS</span>
+      </div>
+      <div class="recent-orders-grid">
+        <div class="recent-order" *ngFor="let order of recentOrders; trackBy: trackById">
+          <div>
+            <strong>{{ order.order_number }}</strong>
+            <span>{{ order.customer }}</span>
+          </div>
+          <div>
+            <strong>{{ order.value }}</strong>
+            <span>{{ order.channel }}</span>
+          </div>
+          <div>
+            <strong>{{ order.payment_provider }}</strong>
+            <span>{{ order.payment_method }}</span>
+          </div>
+        </div>
+      </div>
+    </article>
+  </ng-container>
+</section>

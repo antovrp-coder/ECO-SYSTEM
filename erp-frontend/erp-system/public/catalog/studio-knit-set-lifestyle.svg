@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 1080" role="img" aria-labelledby="title desc">
+  <title id="title">Studio Knit Set lifestyle image</title>
+  <desc id="desc">Editorial lifestyle arrangement for the knit set with folded accessories.</desc>
+  <rect width="960" height="1080" fill="#f9f0f4"/>
+  <rect x="132" y="212" width="696" height="656" rx="40" fill="#fff9f5"/>
+  <rect x="210" y="304" width="262" height="420" rx="36" fill="#b38e7b"/>
+  <rect x="500" y="304" width="194" height="420" rx="32" fill="#9f7c69"/>
+  <rect x="260" y="748" width="140" height="72" rx="18" fill="#e5d1c4"/>
+  <rect x="520" y="748" width="110" height="72" rx="18" fill="#d9c1d2"/>
+  <text x="112" y="150" font-family="Segoe UI, Arial, sans-serif" font-size="38" font-weight="700" fill="#795e66">Folded layers and matching lounge set</text>
+</svg>

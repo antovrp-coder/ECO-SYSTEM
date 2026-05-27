@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 1080" role="img" aria-labelledby="title desc">
+  <title id="title">AeroFit Trail Jacket hero image</title>
+  <desc id="desc">Technical trail jacket in a studio catalog scene.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#edf4ff"/>
+      <stop offset="100%" stop-color="#fff0cc"/>
+    </linearGradient>
+    <linearGradient id="jacket" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2b4666"/>
+      <stop offset="100%" stop-color="#18283d"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="1080" fill="url(#bg)"/>
+  <circle cx="742" cy="240" r="148" fill="#ffffff" fill-opacity="0.72"/>
+  <path d="M210 870c54-220 204-336 270-336s216 116 270 336" fill="#d7e5f5"/>
+  <path d="M374 214l106 82 106-82 84 120-62 70v342c0 62-50 112-112 112H464c-62 0-112-50-112-112V404l-62-70 84-120z" fill="url(#jacket)"/>
+  <path d="M434 266h92l28 78-74 76-74-76 28-78z" fill="#f5b14a"/>
+  <rect x="446" y="426" width="68" height="274" rx="20" fill="#243b59"/>
+  <rect x="310" y="460" width="76" height="182" rx="24" fill="#243b59"/>
+  <rect x="574" y="460" width="76" height="182" rx="24" fill="#243b59"/>
+  <text x="96" y="138" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700" fill="#20324a">AeroFit Trail Jacket</text>
+  <text x="96" y="188" font-family="Segoe UI, Arial, sans-serif" font-size="24" fill="#5c6f87">All-weather shell with expedition cut</text>
+</svg>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 1080" role="img" aria-labelledby="title desc">
+  <title id="title">Pulse Pro Earbuds hero image</title>
+  <desc id="desc">Wireless earbuds and charging case in a premium studio setup.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#eef5ff"/>
+      <stop offset="100%" stop-color="#dfeaff"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="1080" fill="url(#bg)"/>
+  <ellipse cx="478" cy="850" rx="240" ry="62" fill="#cfdcf1"/>
+  <rect x="262" y="454" width="436" height="242" rx="104" fill="#1f3856"/>
+  <rect x="300" y="488" width="360" height="128" rx="64" fill="#2e4a6e"/>
+  <rect x="334" y="366" width="74" height="206" rx="37" fill="#ffffff"/>
+  <rect x="552" y="366" width="74" height="206" rx="37" fill="#ffffff"/>
+  <circle cx="372" cy="550" r="18" fill="#f4b35d"/>
+  <circle cx="590" cy="550" r="18" fill="#f4b35d"/>
+  <text x="96" y="138" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700" fill="#213551">Pulse Pro Earbuds</text>
+  <text x="96" y="186" font-family="Segoe UI, Arial, sans-serif" font-size="24" fill="#5b7191">Adaptive noise control with low-latency audio</text>
+</svg>
