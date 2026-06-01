@@ -59,9 +59,9 @@ Edit `/opt/eco-system/.env.prod` and set:
 - `FRONTEND_IMAGE=ghcr.io/<github-owner>/erp-frontend`
 - `APP_TAG=latest` or a specific release tag such as `v1.0.0`
 - `POSTGRES_PASSWORD=<strong-password>`
+- `SITE_DOMAIN=<your-domain>`
 - `WEBAUTHN_RP_ID=<your-domain>`
 - `WEBAUTHN_RP_ORIGINS=https://<your-domain>`
-- `FRONTEND_PORT=80`
 
 ## 6. Log in to GHCR on the droplet
 
@@ -83,17 +83,31 @@ chmod +x deploy-prod.sh
 
 This script pulls the latest configured images and starts the stack in detached mode.
 
-## 8. Verify the deployment
+## 8. Enable HTTPS with Caddy
+
+The production stack includes a `caddy` service that:
+
+- listens on ports `80` and `443`
+- requests and renews TLS certificates automatically
+- proxies public traffic to the internal `frontend` container
+
+Before starting the stack, make sure:
+
+- the A record for your domain points to the droplet IP
+- ports `80` and `443` are open in the DigitalOcean firewall and on the droplet
+
+## 9. Verify the deployment
 
 Run on the droplet:
 
 ```bash
 docker compose --env-file .env.prod -f docker-compose.prod.yml ps
 docker compose --env-file .env.prod -f docker-compose.prod.yml logs --tail=100
-curl http://localhost/health
+curl -I http://localhost
+curl -I https://styleeehome.com
 ```
 
-## 9. Update to a newer image
+## 10. Update to a newer image
 
 When GitHub Actions publishes a new image:
 
@@ -106,7 +120,8 @@ If you pin a tag in `.env.prod`, update `APP_TAG` first and rerun the script.
 
 ## Notes
 
-- The frontend container exposes port 80 by default.
+- Caddy is the only public-facing container and terminates HTTPS.
+- The frontend container stays internal to the Docker network.
 - The backend stays internal to the Docker network and is reached through Nginx.
 - PostgreSQL data persists in the `postgres_data` volume.
-- For HTTPS in production, place a reverse proxy such as Caddy, Nginx, or Traefik in front of the frontend container, or terminate TLS directly on the droplet.
+- Caddy certificate data persists in the `caddy_data` volume.
