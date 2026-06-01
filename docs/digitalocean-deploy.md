@@ -137,6 +137,8 @@ If you want production to update automatically after a merge to `main`, configur
 - `GHCR_USERNAME` - GitHub username that can pull the production images
 - `GHCR_TOKEN` - token with `read:packages` for GHCR pulls on the droplet
 
+You can store these either as repository secrets or as environment secrets if you later bind the workflows to a GitHub environment such as `production`.
+
 The repository includes `.github/workflows/deploy-production.yml`, which on merges to `main` will:
 
 - build and push the backend image

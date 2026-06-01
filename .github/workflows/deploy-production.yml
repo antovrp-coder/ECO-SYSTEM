@@ -100,6 +100,12 @@ jobs:
       - build-frontend
     env:
       APP_TAG: sha-${{ github.sha }}
+      PROD_HOST: ${{ secrets.PROD_HOST }}
+      PROD_USER: ${{ secrets.PROD_USER }}
+      PROD_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
+      PROD_PORT: ${{ secrets.PROD_PORT }}
+      GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
     permissions:
       contents: read
 
@@ -109,19 +115,19 @@ jobs:
 
       - name: Validate deploy secrets
         run: |
-          test -n "${{ secrets.PROD_HOST }}" || { echo "Missing PROD_HOST"; exit 1; }
-          test -n "${{ secrets.PROD_USER }}" || { echo "Missing PROD_USER"; exit 1; }
-          test -n "${{ secrets.PROD_SSH_KEY }}" || { echo "Missing PROD_SSH_KEY"; exit 1; }
-          test -n "${{ secrets.GHCR_USERNAME }}" || { echo "Missing GHCR_USERNAME"; exit 1; }
-          test -n "${{ secrets.GHCR_TOKEN }}" || { echo "Missing GHCR_TOKEN"; exit 1; }
+          test -n "$PROD_HOST" || { echo "Missing PROD_HOST"; exit 1; }
+          test -n "$PROD_USER" || { echo "Missing PROD_USER"; exit 1; }
+          test -n "$PROD_SSH_KEY" || { echo "Missing PROD_SSH_KEY"; exit 1; }
+          test -n "$GHCR_USERNAME" || { echo "Missing GHCR_USERNAME"; exit 1; }
+          test -n "$GHCR_TOKEN" || { echo "Missing GHCR_TOKEN"; exit 1; }
 
       - name: Copy deployment files to droplet
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USER }}
-          key: ${{ secrets.PROD_SSH_KEY }}
-          port: ${{ secrets.PROD_PORT || 22 }}
+          host: ${{ env.PROD_HOST }}
+          username: ${{ env.PROD_USER }}
+          key: ${{ env.PROD_SSH_KEY }}
+          port: ${{ env.PROD_PORT || 22 }}
           source: Caddyfile,docker-compose.prod.yml,deploy-prod.sh
           target: /opt/eco-system
           overwrite: true
@@ -129,16 +135,16 @@ jobs:
       - name: Deploy updated stack
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USER }}
-          key: ${{ secrets.PROD_SSH_KEY }}
-          port: ${{ secrets.PROD_PORT || 22 }}
+          host: ${{ env.PROD_HOST }}
+          username: ${{ env.PROD_USER }}
+          key: ${{ env.PROD_SSH_KEY }}
+          port: ${{ env.PROD_PORT || 22 }}
           script_stop: true
           script: |
             set -euo pipefail
             cd /opt/eco-system
             chmod +x deploy-prod.sh
-            echo '${{ secrets.GHCR_TOKEN }}' | docker login ghcr.io -u '${{ secrets.GHCR_USERNAME }}' --password-stdin
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
 
             backup_env_file='.env.prod.pre-deploy.bak'
             deploy_succeeded='false'
