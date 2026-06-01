@@ -1,0 +1,8 @@
+.git
+.gitignore
+.env
+backend.exe
+backend.exe~
+erp-backend.exe
+erp-backend-new.exe
+test_build.exe
