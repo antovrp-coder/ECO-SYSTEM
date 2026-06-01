@@ -107,6 +107,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Validate deploy secrets
+        run: |
+          test -n "${{ secrets.PROD_HOST }}" || { echo "Missing PROD_HOST"; exit 1; }
+          test -n "${{ secrets.PROD_USER }}" || { echo "Missing PROD_USER"; exit 1; }
+          test -n "${{ secrets.PROD_SSH_KEY }}" || { echo "Missing PROD_SSH_KEY"; exit 1; }
+          test -n "${{ secrets.GHCR_USERNAME }}" || { echo "Missing GHCR_USERNAME"; exit 1; }
+          test -n "${{ secrets.GHCR_TOKEN }}" || { echo "Missing GHCR_TOKEN"; exit 1; }
+
       - name: Copy deployment files to droplet
         uses: appleboy/scp-action@v0.1.7
         with:
