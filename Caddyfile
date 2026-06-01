@@ -1,7 +1,3 @@
-http://{$SITE_DOMAIN} {
-    redir https://{$SITE_DOMAIN}{uri} permanent
-}
-
 https://{$SITE_DOMAIN} {
     encode gzip zstd
     reverse_proxy frontend:80
