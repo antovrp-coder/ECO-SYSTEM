@@ -604,6 +604,15 @@
   margin-bottom: 18px;
 }
 
+.marquee-controls {
+  align-items: stretch;
+}
+
+.marquee-editor {
+  flex: 1 1 320px;
+  min-width: 240px;
+}
+
 .profile-passkey-controls-copy {
   flex: 1 1 260px;
   color: var(--app-muted);
@@ -693,6 +702,46 @@
   background: var(--app-warning-bg);
   color: var(--app-warning-text);
   font-size: 0.95rem;
+}
+
+.app-marquee-shell {
+  margin: 0 auto 16px;
+  width: min(960px, 100%);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 24%, var(--app-border));
+  border-radius: 999px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--app-accent) 16%, var(--app-surface-raised)), var(--app-surface));
+  box-shadow: 0 12px 28px var(--app-shadow);
+}
+
+.app-marquee-track {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  width: max-content;
+  min-width: 100%;
+  padding: 12px 0;
+  animation: app-marquee-scroll 18s linear infinite;
+}
+
+.app-marquee-copy {
+  flex: 0 0 auto;
+  padding-left: 24px;
+  white-space: nowrap;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--app-text);
+}
+
+@keyframes app-marquee-scroll {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 .auth-container {
