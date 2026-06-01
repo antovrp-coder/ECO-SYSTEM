@@ -1,0 +1,86 @@
+name: Roll Back Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_tag:
+        description: Image tag to deploy, for example sha-<commit> or v1.0.0
+        required: true
+        type: string
+
+concurrency:
+  group: deploy-production-refs-heads-main
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Copy deployment files to droplet
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ secrets.PROD_PORT || 22 }}
+          source: Caddyfile,docker-compose.prod.yml,deploy-prod.sh
+          target: /opt/eco-system
+          overwrite: true
+
+      - name: Roll back production
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ secrets.PROD_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            cd /opt/eco-system
+            chmod +x deploy-prod.sh
+            echo '${{ secrets.GHCR_TOKEN }}' | docker login ghcr.io -u '${{ secrets.GHCR_USERNAME }}' --password-stdin
+
+            rollback_tag='${{ github.event.inputs.app_tag }}'
+            if [ -z "$rollback_tag" ]; then
+              echo 'app_tag input is required'
+              exit 1
+            fi
+
+            if grep -q '^APP_TAG=' .env.prod; then
+              sed -i "s/^APP_TAG=.*/APP_TAG=$rollback_tag/" .env.prod
+            else
+              printf '\nAPP_TAG=%s\n' "$rollback_tag" >> .env.prod
+            fi
+            echo "Rolling back to APP_TAG=$rollback_tag"
+
+            ./deploy-prod.sh
+
+            site_domain="$(grep -E '^SITE_DOMAIN=' .env.prod | tail -n1 | cut -d= -f2-)"
+
+            if [ -z "$site_domain" ]; then
+              echo 'SITE_DOMAIN is not set in .env.prod'
+              exit 1
+            fi
+
+            for attempt in $(seq 1 12); do
+              if curl --silent --show-error --fail --location --max-time 10 --resolve "$site_domain:443:127.0.0.1" "https://$site_domain/" >/dev/null; then
+                echo "Verified HTTPS response for $site_domain"
+                break
+              fi
+
+              if [ "$attempt" -eq 12 ]; then
+                echo "HTTPS verification failed for $site_domain"
+                exit 1
+              fi
+
+              sleep 5
+            done
+
+            docker compose --env-file .env.prod -f docker-compose.prod.yml ps

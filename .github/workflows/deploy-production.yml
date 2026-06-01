@@ -1,0 +1,192 @@
+name: Build, Push, and Deploy Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-backend:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract backend Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/erp-backend
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./erp-backend
+          file: ./erp-backend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract frontend Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/erp-frontend
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./erp-frontend/erp-system
+          file: ./erp-frontend/erp-system/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs:
+      - build-backend
+      - build-frontend
+    env:
+      APP_TAG: sha-${{ github.sha }}
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Copy deployment files to droplet
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ secrets.PROD_PORT || 22 }}
+          source: Caddyfile,docker-compose.prod.yml,deploy-prod.sh
+          target: /opt/eco-system
+          overwrite: true
+
+      - name: Deploy updated stack
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ secrets.PROD_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            cd /opt/eco-system
+            chmod +x deploy-prod.sh
+            echo '${{ secrets.GHCR_TOKEN }}' | docker login ghcr.io -u '${{ secrets.GHCR_USERNAME }}' --password-stdin
+
+            backup_env_file='.env.prod.pre-deploy.bak'
+            deploy_succeeded='false'
+
+            rollback() {
+              local exit_code=$?
+              trap - ERR
+
+              if [ "$deploy_succeeded" = 'true' ]; then
+                rm -f "$backup_env_file"
+                return 0
+              fi
+
+              if [ -f "$backup_env_file" ]; then
+                echo 'Deployment failed. Restoring previous .env.prod and redeploying the previous version.'
+                mv "$backup_env_file" .env.prod
+                ./deploy-prod.sh || true
+              fi
+
+              exit "$exit_code"
+            }
+
+            trap 'rollback' ERR
+            cp .env.prod "$backup_env_file"
+
+            deploy_tag='${{ env.APP_TAG }}'
+            if grep -q '^APP_TAG=' .env.prod; then
+              sed -i "s/^APP_TAG=.*/APP_TAG=$deploy_tag/" .env.prod
+            else
+              printf '\nAPP_TAG=%s\n' "$deploy_tag" >> .env.prod
+            fi
+            echo "Deploying APP_TAG=$deploy_tag"
+
+            ./deploy-prod.sh
+
+            site_domain="$(grep -E '^SITE_DOMAIN=' .env.prod | tail -n1 | cut -d= -f2-)"
+
+            if [ -z "$site_domain" ]; then
+              echo 'SITE_DOMAIN is not set in .env.prod'
+              exit 1
+            fi
+
+            for attempt in $(seq 1 12); do
+              if curl --silent --show-error --fail --location --max-time 10 --resolve "$site_domain:443:127.0.0.1" "https://$site_domain/" >/dev/null; then
+                echo "Verified HTTPS response for $site_domain"
+                break
+              fi
+
+              if [ "$attempt" -eq 12 ]; then
+                echo "HTTPS verification failed for $site_domain"
+                exit 1
+              fi
+
+              sleep 5
+            done
+
+            deploy_succeeded='true'
+            rm -f "$backup_env_file"
+            docker compose --env-file .env.prod -f docker-compose.prod.yml ps

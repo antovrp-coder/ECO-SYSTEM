@@ -124,7 +124,42 @@ cd /opt/eco-system
 ./deploy-prod.sh
 ```
 
-If you pin a tag in `.env.prod`, update `APP_TAG` first and rerun the script.
+For manual rollouts, update `APP_TAG` in `.env.prod` first if you want to pin a specific image tag and then rerun the script.
+
+## 11. Automate post-merge deployment
+
+If you want production to update automatically after a merge to `main`, configure these GitHub Actions secrets:
+
+- `PROD_HOST` - droplet hostname or IP
+- `PROD_USER` - SSH user on the droplet
+- `PROD_SSH_KEY` - private SSH key for deployment
+- `PROD_PORT` - optional SSH port if not `22`
+- `GHCR_USERNAME` - GitHub username that can pull the production images
+- `GHCR_TOKEN` - token with `read:packages` for GHCR pulls on the droplet
+
+The repository includes `.github/workflows/deploy-production.yml`, which on merges to `main` will:
+
+- build and push the backend image
+- build and push the frontend image
+- set `APP_TAG` on the droplet to the exact `sha-<commit>` image tag from that workflow run
+- copy `Caddyfile`, `docker-compose.prod.yml`, and `deploy-prod.sh` to `/opt/eco-system`
+- log in to GHCR on the droplet
+- run `./deploy-prod.sh`
+- restore the previous `.env.prod` and redeploy the prior version automatically if the deploy or HTTPS verification fails
+- verify the deployed domain answers over HTTPS on the droplet before marking the workflow successful
+
+This automates the normal production path after merge and makes the rollout immutable, while keeping the rest of `.env.prod` managed only on the droplet.
+
+## 12. Roll back production manually
+
+The repository also includes `.github/workflows/rollback-production.yml` for operator-driven rollback.
+
+Run it from GitHub Actions with an `app_tag` input such as `sha-<commit>` or a release tag like `v1.0.0`. The workflow will:
+
+- copy `Caddyfile`, `docker-compose.prod.yml`, and `deploy-prod.sh` to `/opt/eco-system`
+- set `APP_TAG` on the droplet to the requested tag
+- run `./deploy-prod.sh`
+- verify the deployed domain answers over HTTPS before reporting success
 
 ## Notes
 
