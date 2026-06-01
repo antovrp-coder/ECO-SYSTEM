@@ -36,7 +36,7 @@
     </div>
   </mat-sidenav>
   <mat-sidenav-content class="sidenav-content">
-    <mat-toolbar color="primary" class="top-toolbar">
+    <mat-toolbar *ngIf="user" color="primary" class="top-toolbar">
       <div class="workspace-tabs-row" *ngIf="user && tabs.length > 0">
         <div class="workspace-tabs-strip" role="tablist" aria-label="Open modules">
           <button
@@ -221,7 +221,15 @@
       </section>
 
       <div *ngIf="!user" class="auth-container">
-        <mat-card class="auth-card">
+        <div class="auth-shell">
+          <section class="auth-callout">
+            <div class="auth-callout-badge">{{ t('signupTab') }}</div>
+            <h1 class="auth-callout-title">{{ t('signedOutTitle') }}</h1>
+            <p class="auth-callout-copy">{{ t('signedOutCopy') }}</p>
+            <button mat-flat-button color="primary" type="button" (click)="authMode = 'signup'">{{ t('signup') }}</button>
+          </section>
+
+          <mat-card class="auth-card">
           <div class="auth-header">
             <button mat-button [class.active]="authMode === 'login'" (click)="authMode = 'login'">{{ t('loginTab') }}</button>
             <button mat-button [class.active]="authMode === 'signup'" (click)="authMode = 'signup'">{{ t('signupTab') }}</button>
@@ -300,7 +308,8 @@
           </form>
 
           <div *ngIf="authError" class="auth-error">{{ authError }}</div>
-        </mat-card>
+          </mat-card>
+        </div>
       </div>
 
       <div *ngIf="user && !isProfileTabActive()" class="modules-container">
