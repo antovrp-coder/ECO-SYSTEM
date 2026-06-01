@@ -9,7 +9,6 @@ if [[ ! -f "$ENV_FILE" ]]; then
   echo ".env.prod not found next to deploy-prod.sh"
   exit 1
 fi
-
 docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull
 docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d
 docker image prune -f >/dev/null 2>&1 || true
