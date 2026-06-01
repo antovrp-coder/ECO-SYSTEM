@@ -1,5 +1,5 @@
 <mat-sidenav-container class="sidenav-container">
-  <mat-sidenav mode="side" opened class="sidenav" [ngClass]="{ expanded: sidebarExpanded }"
+  <mat-sidenav *ngIf="user" mode="side" opened class="sidenav" [ngClass]="{ expanded: sidebarExpanded }"
     (mouseenter)="toggleSidebar(true)" (mouseleave)="toggleSidebar(false)">
     <mat-nav-list>
       <mat-list-item *ngFor="let module of modules" (click)="selectModule(module)">
@@ -221,14 +221,6 @@
       </section>
 
       <div *ngIf="!user" class="auth-container">
-        <div class="auth-shell">
-          <section class="auth-callout">
-            <div class="auth-callout-badge">{{ t('signupTab') }}</div>
-            <h1 class="auth-callout-title">{{ t('signedOutTitle') }}</h1>
-            <p class="auth-callout-copy">{{ t('signedOutCopy') }}</p>
-            <button mat-flat-button color="primary" type="button" (click)="authMode = 'signup'">{{ t('signup') }}</button>
-          </section>
-
           <mat-card class="auth-card">
           <div class="auth-header">
             <button mat-button [class.active]="authMode === 'login'" (click)="authMode = 'login'">{{ t('loginTab') }}</button>
@@ -309,7 +301,6 @@
 
           <div *ngIf="authError" class="auth-error">{{ authError }}</div>
           </mat-card>
-        </div>
       </div>
 
       <div *ngIf="user && !isProfileTabActive()" class="modules-container">
