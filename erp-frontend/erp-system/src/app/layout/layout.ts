@@ -114,6 +114,8 @@ type LocalizedDisplayNames = Partial<Record<LanguageId, string>>;
 })
 export class Layout implements OnInit, OnDestroy {
   private readonly voiceAssistantStorageKey = 'erpVoiceAssistantEnabled';
+  private readonly marqueeEnabledStorageKeyPrefix = 'erpMarqueeEnabled';
+  private readonly marqueeTextStorageKeyPrefix = 'erpMarqueeText';
   private cameraVideoRef?: ElementRef<HTMLVideoElement>;
   private cameraPreviewCanvasRef?: ElementRef<HTMLCanvasElement>;
   private cameraPreviewFrameHandle: number | null = null;
@@ -175,6 +177,8 @@ export class Layout implements OnInit, OnDestroy {
   voiceSpeaking = false;
   voiceStatusMessage = '';
   voiceLastCommand = '';
+  marqueeEnabled = false;
+  marqueeText = '';
   passkeyBusy = false;
   faceBusy = false;
   loginPasskeyAvailable = false;
@@ -229,6 +233,7 @@ export class Layout implements OnInit, OnDestroy {
       try {
         this.user = this.normalizeStoredUser(JSON.parse(stored));
         this.loadLocalizedDisplayNames();
+        this.loadMarqueePreference();
       } catch {
         this.user = null;
       }
@@ -393,6 +398,8 @@ export class Layout implements OnInit, OnDestroy {
     this.user = null;
     this.localizedDisplayNames = {};
     this.displayNameInput = '';
+    this.marqueeEnabled = false;
+    this.marqueeText = '';
     this.refreshGreetingMessage();
     localStorage.removeItem('erpUser');
     this.syncLoginPasskeyAvailabilityFromUser();
@@ -794,6 +801,10 @@ export class Layout implements OnInit, OnDestroy {
     this.setVoiceAssistantEnabled(!this.voiceAssistantEnabled);
   }
 
+  toggleMarqueeSetting() {
+    this.setMarqueeEnabled(!this.marqueeEnabled);
+  }
+
   toggleVoiceListening() {
     if (this.voiceListening) {
       this.stopVoiceAssistant();
@@ -809,6 +820,37 @@ export class Layout implements OnInit, OnDestroy {
     }
 
     void this.persistLocalizedDisplayNames();
+  }
+
+  saveMarqueeSettings() {
+    if (!this.user) {
+      return;
+    }
+
+    this.marqueeText = this.marqueeText.trim();
+    localStorage.setItem(this.getMarqueeTextStorageKey(), this.marqueeText);
+
+    if (this.marqueeEnabled && !this.marqueeText) {
+      this.setMarqueeEnabled(false);
+      this.notificationService.warning(this.t('marqueeNeedsText'), 3000);
+      return;
+    }
+
+    this.notificationService.success(this.t('marqueeSavedMessage'), 2500);
+  }
+
+  onMarqueeTextChange(value: string) {
+    this.marqueeText = value;
+
+    if (!this.user) {
+      return;
+    }
+
+    localStorage.setItem(this.getMarqueeTextStorageKey(), value);
+  }
+
+  get shouldShowMarquee(): boolean {
+    return Boolean(this.user && this.marqueeEnabled && this.marqueeText.trim());
   }
 
   private async persistLocalizedDisplayNames() {
@@ -908,6 +950,7 @@ export class Layout implements OnInit, OnDestroy {
         hasPasskey: Boolean(result.has_passkey ?? result.hasPasskey),
       };
       this.loadLocalizedDisplayNames();
+      this.loadMarqueePreference();
       this.refreshGreetingMessage();
       localStorage.setItem('erpUser', JSON.stringify(this.user));
       this.syncLoginPasskeyAvailabilityFromUser();
@@ -1046,6 +1089,20 @@ export class Layout implements OnInit, OnDestroy {
       : this.t('voiceAssistantDisabledCopy');
   }
 
+  private loadMarqueePreference() {
+    if (!this.user) {
+      this.marqueeEnabled = false;
+      this.marqueeText = '';
+      return;
+    }
+
+    const storedText = localStorage.getItem(this.getMarqueeTextStorageKey()) ?? '';
+    const storedEnabled = localStorage.getItem(this.getMarqueeEnabledStorageKey());
+
+    this.marqueeText = storedText.trim();
+    this.marqueeEnabled = storedEnabled === 'true' && Boolean(this.marqueeText);
+  }
+
   private setVoiceAssistantEnabled(enabled: boolean) {
     this.voiceAssistantEnabled = enabled;
     localStorage.setItem(this.voiceAssistantStorageKey, String(enabled));
@@ -1059,6 +1116,35 @@ export class Layout implements OnInit, OnDestroy {
 
     this.voiceStatusMessage = this.t('voiceAssistantIdle');
     this.notificationService.success(this.t('voiceAssistantEnabledMessage'), 2500);
+  }
+
+  private setMarqueeEnabled(enabled: boolean) {
+    if (!this.user) {
+      return;
+    }
+
+    if (enabled && !this.marqueeText.trim()) {
+      this.notificationService.warning(this.t('marqueeNeedsText'), 3000);
+      return;
+    }
+
+    this.marqueeEnabled = enabled;
+    localStorage.setItem(this.getMarqueeEnabledStorageKey(), String(enabled));
+
+    if (enabled) {
+      this.notificationService.success(this.t('marqueeEnabledMessage'), 2500);
+      return;
+    }
+
+    this.notificationService.info(this.t('marqueeDisabledMessage'), 2500);
+  }
+
+  private getMarqueeEnabledStorageKey(): string {
+    return `${this.marqueeEnabledStorageKeyPrefix}:${this.user?.id ?? 'guest'}`;
+  }
+
+  private getMarqueeTextStorageKey(): string {
+    return `${this.marqueeTextStorageKeyPrefix}:${this.user?.id ?? 'guest'}`;
   }
 
   private startVoiceAssistant() {

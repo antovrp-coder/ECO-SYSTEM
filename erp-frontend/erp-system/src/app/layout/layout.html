@@ -71,6 +71,13 @@
       </div>
     </mat-toolbar>
     <div class="main-content">
+      <div *ngIf="shouldShowMarquee" class="app-marquee-shell" aria-live="polite">
+        <div class="app-marquee-track">
+          <span class="app-marquee-copy">{{ marqueeText }}</span>
+          <span class="app-marquee-copy" aria-hidden="true">{{ marqueeText }}</span>
+        </div>
+      </div>
+
       <div *ngIf="backendStatusMessage" class="backend-status-banner">
         {{ backendStatusMessage }}
       </div>
@@ -174,6 +181,30 @@
           </div>
           <div class="passkey-hint" *ngIf="voiceAssistantEnabled">{{ voiceStatusMessage }}</div>
           <div class="passkey-hint warning" *ngIf="!voiceAssistantSupported">{{ t('voiceAssistantUnsupported') }}</div>
+        </div>
+
+        <div class="profile-passkey-status" [class.enabled]="marqueeEnabled && !!marqueeText.trim()">
+          <mat-icon>{{ marqueeEnabled && marqueeText.trim() ? 'campaign' : 'do_not_disturb_on' }}</mat-icon>
+          <div>
+            <div class="profile-passkey-status-title">{{ marqueeEnabled ? t('marqueeEnabledTitle') : t('marqueeDisabledTitle') }}</div>
+            <div class="profile-passkey-status-copy">
+              {{ marqueeEnabled ? t('marqueeEnabledCopy') : t('marqueeDisabledCopy') }}
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-passkey-controls marquee-controls">
+          <button mat-flat-button color="primary" type="button" (click)="toggleMarqueeSetting()">
+            {{ marqueeEnabled ? t('disableMarquee') : t('enableMarquee') }}
+          </button>
+          <div class="marquee-editor">
+            <mat-form-field appearance="fill" class="full-width">
+              <mat-label>{{ t('marqueeTextLabel') }}</mat-label>
+              <input matInput [(ngModel)]="marqueeText" (ngModelChange)="onMarqueeTextChange($event)" maxlength="240" />
+            </mat-form-field>
+            <div class="localized-display-name-hint">{{ t('marqueeTextHint') }}</div>
+          </div>
+          <button mat-stroked-button type="button" (click)="saveMarqueeSettings()">{{ t('saveMarquee') }}</button>
         </div>
 
         <div class="profile-work-panel-section-title">{{ t('chooseLanguage') }}</div>
