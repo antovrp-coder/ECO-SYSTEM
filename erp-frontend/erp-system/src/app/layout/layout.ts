@@ -1,4 +1,4 @@
-import { Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -64,9 +64,12 @@ interface ModuleItem {
 }
 
 interface WorkspaceTab {
+  kind: 'module' | 'profile';
   moduleId: number;
   moduleName: string;
-  subMenu: string;
+  moduleIcon: string;
+  subMenus: string[];
+  activeSubMenu: string;
 }
 
 interface User {
@@ -141,9 +144,9 @@ export class Layout implements OnInit, OnDestroy {
   modules: ModuleItem[] = [];
   selectedModule: ModuleItem | null = null;
   tabs: WorkspaceTab[] = [];
+  activeWorkspaceTabIndex = 0;
   sidebarExpanded = false;
   backendStatusMessage = '';
-  profilePanelOpen = false;
   themeMode: ThemeId = 'light';
   private i18nService = inject(I18nService);
   readonly themes: ThemeOption[] = [
@@ -186,6 +189,7 @@ export class Layout implements OnInit, OnDestroy {
   private localizedDisplayNames: LocalizedDisplayNames = {};
   private document = inject(DOCUMENT);
   private ngZone = inject(NgZone);
+  private changeDetectorRef = inject(ChangeDetectorRef);
   private cameraStream: MediaStream | null = null;
   private faceApiLoadPromise: Promise<any> | null = null;
   private loginPasskeyLookupHandle: ReturnType<typeof setTimeout> | null = null;
@@ -269,41 +273,54 @@ export class Layout implements OnInit, OnDestroy {
         throw new Error('Failed to load modules');
       }
       const modules = await this.readApiBody<any[]>(response, 'module list');
-      this.modules = modules.map((module: any) => ({
+      const mappedModules = modules.map((module: any) => ({
         id: module.id,
         name: module.name,
         icon: module.icon || 'folder',
         subMenus: []
       }));
-      if (this.modules.length && !this.selectedModule) {
-        this.selectModule(this.modules[0]);
+
+      this.ngZone.run(() => {
+        this.modules = mappedModules;
+        this.scheduleViewRefresh();
+      });
+
+      if (mappedModules.length && !this.selectedModule) {
+        await this.selectModule(mappedModules[0]);
       }
     } catch (error) {
       console.error(error);
-      this.modules = [];
-      this.selectedModule = null;
+      this.ngZone.run(() => {
+        this.modules = [];
+        this.selectedModule = null;
+        this.scheduleViewRefresh();
+      });
     }
   }
 
   async selectModule(module: ModuleItem) {
-    this.selectedModule = module;
-    await this.loadSubMenus(module);
+    const selectedModule = await this.loadSubMenus(module);
+    this.ngZone.run(() => {
+      this.selectedModule = selectedModule;
+      this.openModuleTab(selectedModule);
+      this.scheduleViewRefresh();
+    });
   }
 
-  async loadSubMenus(module: ModuleItem) {
+  async loadSubMenus(module: ModuleItem): Promise<ModuleItem> {
     try {
       const response = await this.apiRequest(`/api/modules/${module.id}/menus`);
       if (!response.ok) {
         throw new Error('Failed to load submenu items');
       }
       const menus = await this.readApiBody<any[]>(response, 'submenu list');
-      this.selectedModule = {
+      return {
         ...module,
         subMenus: menus.map((item: any) => item.name)
       };
     } catch (error) {
       console.error(error);
-      this.selectedModule = { ...module, subMenus: [] };
+      return { ...module, subMenus: [] };
     }
   }
 
@@ -640,22 +657,58 @@ export class Layout implements OnInit, OnDestroy {
   }
 
   openTab(subMenu: string) {
-    if (!this.selectedModule) {
+    if (!this.selectedModule || this.getActiveTab()?.kind !== 'module') {
       return;
     }
 
-    const existingTab = this.tabs.find((tab) => tab.moduleId === this.selectedModule?.id && tab.subMenu === subMenu);
+    const tabIndex = this.ensureModuleTab(this.selectedModule);
+    const existingTab = this.tabs[tabIndex];
     if (!existingTab) {
-      this.tabs.push({
-        moduleId: this.selectedModule.id,
-        moduleName: this.selectedModule.name,
-        subMenu,
-      });
+      return;
     }
+
+    this.tabs[tabIndex] = {
+      ...existingTab,
+      subMenus: [...(this.selectedModule.subMenus ?? [])],
+      activeSubMenu: subMenu,
+    };
+    this.activeWorkspaceTabIndex = tabIndex;
+    this.syncSelectedModuleFromActiveTab();
   }
 
   closeTab(index: number) {
     this.tabs.splice(index, 1);
+
+    if (!this.tabs.length) {
+      this.activeWorkspaceTabIndex = 0;
+      this.selectedModule = null;
+      return;
+    }
+
+    this.activeWorkspaceTabIndex = Math.min(index, this.tabs.length - 1);
+    this.syncSelectedModuleFromActiveTab();
+  }
+
+  onWorkspaceTabChange(index: number) {
+    this.activeWorkspaceTabIndex = index;
+    this.syncSelectedModuleFromActiveTab();
+    if (this.isProfileTabActive()) {
+      void this.refreshCurrentUserPasskeyState();
+      void this.refreshCurrentUserFaceState();
+    }
+  }
+
+  getActiveSubMenu(): string | null {
+    const activeTab = this.getActiveTab();
+    return activeTab?.kind === 'module' ? activeTab.activeSubMenu : null;
+  }
+
+  isProfileTab(tab: WorkspaceTab): boolean {
+    return tab.kind === 'profile';
+  }
+
+  isProfileTabActive(): boolean {
+    return this.getActiveTab()?.kind === 'profile';
   }
 
   isEcommerceTab(tab: WorkspaceTab): boolean {
@@ -664,7 +717,7 @@ export class Layout implements OnInit, OnDestroy {
   }
 
   isPosTab(tab: WorkspaceTab): boolean {
-    return this.normalizeWorkspaceKey(tab.moduleName) === 'sales' && this.normalizeWorkspaceKey(tab.subMenu) === 'pos';
+    return this.normalizeWorkspaceKey(tab.moduleName) === 'sales' && this.normalizeWorkspaceKey(tab.activeSubMenu) === 'pos';
   }
 
   isHrTab(tab: WorkspaceTab): boolean {
@@ -692,15 +745,21 @@ export class Layout implements OnInit, OnDestroy {
   }
 
   toggleProfilePanel() {
-    this.profilePanelOpen = !this.profilePanelOpen;
-    if (this.profilePanelOpen) {
-      void this.refreshCurrentUserPasskeyState();
-      void this.refreshCurrentUserFaceState();
+    if (this.isProfileTabActive()) {
+      this.closeProfilePanel();
+      return;
     }
+
+    this.openProfileTab();
   }
 
   closeProfilePanel() {
-    this.profilePanelOpen = false;
+    const profileTabIndex = this.tabs.findIndex((tab) => tab.kind === 'profile');
+    if (profileTabIndex < 0) {
+      return;
+    }
+
+    this.closeTab(profileTabIndex);
   }
 
   setTheme(themeId: ThemeId) {
@@ -713,7 +772,7 @@ export class Layout implements OnInit, OnDestroy {
     this.applyTheme();
     const selectedTheme = this.themes.find(theme => theme.id === themeId);
     this.notificationService.info(this.t('themeChanged', { theme: selectedTheme ? this.t(selectedTheme.labelKey) : themeId }), 2000);
-    this.profilePanelOpen = true;
+    this.openProfileTab();
   }
 
   setLanguage(languageId: LanguageId) {
@@ -728,7 +787,7 @@ export class Layout implements OnInit, OnDestroy {
     this.syncDisplayNameInput();
     this.refreshGreetingMessage();
     this.notificationService.info(this.t('languageChanged', { language: this.getLanguageLabel(languageId) }), 2000);
-    this.profilePanelOpen = true;
+    this.openProfileTab();
   }
 
   toggleVoiceAssistantSetting() {
@@ -837,21 +896,113 @@ export class Layout implements OnInit, OnDestroy {
   }
 
   private persistAuthenticatedUser(result: any) {
-    this.user = {
-      id: result.id,
-      username: result.username,
-      email: result.email,
-      fullName: result.full_name ?? result.fullName ?? '',
-      faceImage: result.face_image ?? result.faceImage ?? '',
-      localizedDisplayNames: result.localized_display_names ?? result.localizedDisplayNames ?? {},
-      hasFaceLogin: Boolean(result.has_face_login ?? result.hasFaceLogin),
-      hasPasskey: Boolean(result.has_passkey ?? result.hasPasskey),
+    this.ngZone.run(() => {
+      this.user = {
+        id: result.id,
+        username: result.username,
+        email: result.email,
+        fullName: result.full_name ?? result.fullName ?? '',
+        faceImage: result.face_image ?? result.faceImage ?? '',
+        localizedDisplayNames: result.localized_display_names ?? result.localizedDisplayNames ?? {},
+        hasFaceLogin: Boolean(result.has_face_login ?? result.hasFaceLogin),
+        hasPasskey: Boolean(result.has_passkey ?? result.hasPasskey),
+      };
+      this.loadLocalizedDisplayNames();
+      this.refreshGreetingMessage();
+      localStorage.setItem('erpUser', JSON.stringify(this.user));
+      this.syncLoginPasskeyAvailabilityFromUser();
+      this.syncLoginFaceAvailabilityFromUser();
+    });
+  }
+
+  private openModuleTab(module: ModuleItem) {
+    const tabIndex = this.ensureModuleTab(module);
+    this.activeWorkspaceTabIndex = tabIndex;
+    this.syncSelectedModuleFromActiveTab();
+  }
+
+  private ensureModuleTab(module: ModuleItem): number {
+    const existingTabIndex = this.tabs.findIndex((tab) => tab.kind === 'module' && tab.moduleId === module.id);
+    const fallbackSubMenu = module.subMenus?.[0] ?? '';
+
+    if (existingTabIndex >= 0) {
+      const existingTab = this.tabs[existingTabIndex];
+      this.tabs[existingTabIndex] = {
+        ...existingTab,
+        kind: 'module',
+        moduleName: module.name,
+        moduleIcon: module.icon,
+        subMenus: [...(module.subMenus ?? [])],
+        activeSubMenu: existingTab.activeSubMenu && (module.subMenus ?? []).includes(existingTab.activeSubMenu)
+          ? existingTab.activeSubMenu
+          : fallbackSubMenu,
+      };
+      return existingTabIndex;
+    }
+
+    this.tabs.push({
+      kind: 'module',
+      moduleId: module.id,
+      moduleName: module.name,
+      moduleIcon: module.icon,
+      subMenus: [...(module.subMenus ?? [])],
+      activeSubMenu: fallbackSubMenu,
+    });
+
+    return this.tabs.length - 1;
+  }
+
+  private syncSelectedModuleFromActiveTab() {
+    const activeTab = this.tabs[this.activeWorkspaceTabIndex];
+    if (!activeTab || activeTab.kind !== 'module') {
+      this.selectedModule = null;
+      return;
+    }
+
+    this.selectedModule = {
+      id: activeTab.moduleId,
+      name: activeTab.moduleName,
+      icon: activeTab.moduleIcon,
+      subMenus: [...activeTab.subMenus],
     };
-    this.loadLocalizedDisplayNames();
-    this.refreshGreetingMessage();
-    localStorage.setItem('erpUser', JSON.stringify(this.user));
-    this.syncLoginPasskeyAvailabilityFromUser();
-    this.syncLoginFaceAvailabilityFromUser();
+  }
+
+  private openProfileTab() {
+    const tabIndex = this.ensureProfileTab();
+    this.activeWorkspaceTabIndex = tabIndex;
+    this.syncSelectedModuleFromActiveTab();
+    void this.refreshCurrentUserPasskeyState();
+    void this.refreshCurrentUserFaceState();
+  }
+
+  private ensureProfileTab(): number {
+    const existingTabIndex = this.tabs.findIndex((tab) => tab.kind === 'profile');
+    if (existingTabIndex >= 0) {
+      return existingTabIndex;
+    }
+
+    this.tabs.push({
+      kind: 'profile',
+      moduleId: 0,
+      moduleName: this.t('profileSettings'),
+      moduleIcon: 'account_circle',
+      subMenus: [],
+      activeSubMenu: '',
+    });
+
+    return this.tabs.length - 1;
+  }
+
+  private getActiveTab(): WorkspaceTab | null {
+    return this.tabs[this.activeWorkspaceTabIndex] ?? null;
+  }
+
+  private scheduleViewRefresh() {
+    setTimeout(() => {
+      this.ngZone.run(() => {
+        this.changeDetectorRef.detectChanges();
+      });
+    }, 0);
   }
 
   private normalizeStoredUser(stored: any): User {
@@ -1222,7 +1373,7 @@ export class Layout implements OnInit, OnDestroy {
     }
 
     if (this.matchesVoiceCommand(normalizedCommand, ['open profile', 'show profile'])) {
-      this.profilePanelOpen = true;
+      this.openProfileTab();
       this.respondToVoiceCommand(this.t('profileSettings'));
       return true;
     }

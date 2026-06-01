@@ -37,16 +37,37 @@
   </mat-sidenav>
   <mat-sidenav-content class="sidenav-content">
     <mat-toolbar color="primary" class="top-toolbar">
-      <div class="toolbar-top-row" *ngIf="selectedModule || user">
-        <mat-button-toggle-group *ngIf="selectedModule" class="top-tabs">
-          <mat-button-toggle *ngFor="let subMenu of selectedModule.subMenus" (click)="openTab(subMenu)">
+      <div class="workspace-tabs-row" *ngIf="user && tabs.length > 0">
+        <div class="workspace-tabs-strip" role="tablist" aria-label="Open modules">
+          <button
+            type="button"
+            class="workspace-tab-chip"
+            *ngFor="let tab of tabs; let i = index"
+            [class.active]="activeWorkspaceTabIndex === i"
+            [attr.aria-selected]="activeWorkspaceTabIndex === i"
+            (click)="onWorkspaceTabChange(i)">
+            <span class="workspace-tab-chip-label">{{ translateEntity(tab.moduleName) }}</span>
+            <span
+              class="workspace-tab-chip-close"
+              role="button"
+              tabindex="0"
+              aria-label="Close module tab"
+              (click)="closeTab(i); $event.stopPropagation()"
+              (keydown.enter)="closeTab(i); $event.stopPropagation()"
+              (keydown.space)="closeTab(i); $event.preventDefault(); $event.stopPropagation()">
+              <mat-icon>close</mat-icon>
+            </span>
+          </button>
+        </div>
+        <span *ngIf="user" class="toolbar-greeting workspace-tabs-greeting">{{ greetingMessage }}</span>
+      </div>
+
+      <div class="toolbar-top-row" *ngIf="selectedModule">
+        <mat-button-toggle-group class="top-tabs" [value]="getActiveSubMenu()">
+          <mat-button-toggle *ngFor="let subMenu of selectedModule.subMenus" [value]="subMenu" (click)="openTab(subMenu)">
             {{ translateEntity(subMenu) }}
           </mat-button-toggle>
         </mat-button-toggle-group>
-        <div class="toolbar-title-stack toolbar-title-stack-right">
-          <span *ngIf="selectedModule" class="toolbar-heading toolbar-heading-centered">{{ translateEntity(selectedModule.name) }}</span>
-          <span *ngIf="user" class="toolbar-greeting toolbar-greeting-centered">{{ greetingMessage }}</span>
-        </div>
       </div>
     </mat-toolbar>
     <div class="main-content">
@@ -54,7 +75,7 @@
         {{ backendStatusMessage }}
       </div>
 
-      <section *ngIf="user && profilePanelOpen" class="profile-work-panel">
+      <section *ngIf="user && isProfileTabActive()" class="profile-work-panel">
         <div class="profile-work-panel-header">
           <div>
             <div class="profile-work-panel-title">{{ t('profileSettings') }}</div>
@@ -282,32 +303,32 @@
         </mat-card>
       </div>
 
-      <div *ngIf="user" class="modules-container">
-        <mat-tab-group *ngIf="tabs.length > 0" class="tabs-section">
-          <mat-tab *ngFor="let tab of tabs; let i = index" [label]="translateEntity(tab.subMenu)">
+      <div *ngIf="user && !isProfileTabActive()" class="modules-container">
+        <mat-tab-group *ngIf="tabs.length > 0" class="tabs-section" [selectedIndex]="activeWorkspaceTabIndex" (selectedIndexChange)="onWorkspaceTabChange($event)">
+          <mat-tab *ngFor="let tab of tabs; let i = index" [label]="translateEntity(tab.moduleName)">
             <ng-template matTabContent>
-                <app-ecommerce-workspace *ngIf="isEcommerceTab(tab); else nonEcommerceTabContent" [tabName]="tab.subMenu"></app-ecommerce-workspace>
+                <app-ecommerce-workspace *ngIf="isEcommerceTab(tab); else nonEcommerceTabContent" [tabName]="tab.activeSubMenu"></app-ecommerce-workspace>
                 <ng-template #nonEcommerceTabContent>
                     <app-pos-workspace *ngIf="isPosTab(tab); else nonPosTabContent"></app-pos-workspace>
                   </ng-template>
                   <ng-template #nonPosTabContent>
-                    <app-hr-workspace *ngIf="isHrTab(tab); else nonHrTabContent" [tabName]="tab.subMenu"></app-hr-workspace>
+                    <app-hr-workspace *ngIf="isHrTab(tab); else nonHrTabContent" [tabName]="tab.activeSubMenu"></app-hr-workspace>
                 </ng-template>
                 <ng-template #nonHrTabContent>
-                  <app-inventory-workspace *ngIf="isInventoryTab(tab); else nonInventoryTabContent" [tabName]="tab.subMenu"></app-inventory-workspace>
+                  <app-inventory-workspace *ngIf="isInventoryTab(tab); else nonInventoryTabContent" [tabName]="tab.activeSubMenu"></app-inventory-workspace>
                 </ng-template>
                 <ng-template #nonInventoryTabContent>
-                  <app-crm-workspace *ngIf="isCrmTab(tab); else nonCrmTabContent" [tabName]="tab.subMenu"></app-crm-workspace>
+                  <app-crm-workspace *ngIf="isCrmTab(tab); else nonCrmTabContent" [tabName]="tab.activeSubMenu"></app-crm-workspace>
                 </ng-template>
                 <ng-template #nonCrmTabContent>
-                  <app-finance-workspace *ngIf="isFinanceTab(tab); else nonFinanceTabContent" [tabName]="tab.subMenu"></app-finance-workspace>
+                  <app-finance-workspace *ngIf="isFinanceTab(tab); else nonFinanceTabContent" [tabName]="tab.activeSubMenu"></app-finance-workspace>
                 </ng-template>
                 <ng-template #nonFinanceTabContent>
-                  <app-purchase-workspace *ngIf="isPurchaseTab(tab); else genericTabContent" [tabName]="tab.subMenu"></app-purchase-workspace>
+                  <app-purchase-workspace *ngIf="isPurchaseTab(tab); else genericTabContent" [tabName]="tab.activeSubMenu"></app-purchase-workspace>
                 </ng-template>
                 <ng-template #genericTabContent>
                 <div class="tab-content">
-                  {{ t('tabContentFor', { tab: translateEntity(tab.subMenu) }) }}
+                  {{ t('tabContentFor', { tab: translateEntity(tab.activeSubMenu || tab.moduleName) }) }}
                 </div>
               </ng-template>
             </ng-template>
