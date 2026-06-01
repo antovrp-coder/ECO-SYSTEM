@@ -59,7 +59,7 @@ Edit `/opt/eco-system/.env.prod` and set:
 - `FRONTEND_IMAGE=ghcr.io/<github-owner>/erp-frontend`
 - `APP_TAG=latest` or a specific release tag such as `v1.0.0`
 - `POSTGRES_PASSWORD=<strong-password>`
-- `SITE_DOMAIN=<your-domain>`
+- `SITE_DOMAIN=<your-domain>` using the bare host only, for example `styleeehome.com`
 - `WEBAUTHN_RP_ID=<your-domain>`
 - `WEBAUTHN_RP_ORIGINS=https://<your-domain>`
 
@@ -95,6 +95,14 @@ Before starting the stack, make sure:
 
 - the A record for your domain points to the droplet IP
 - ports `80` and `443` are open in the DigitalOcean firewall and on the droplet
+
+If certificate issuance fails, verify that Caddy is matching the host before waiting on ACME. On the droplet, this should return the frontend response instead of a plain `404 page not found`:
+
+```bash
+curl -I -H 'Host: <your-domain>' http://127.0.0.1
+```
+
+If that host-header check returns a plain 404, `SITE_DOMAIN` is wrong or the request is not reaching the Caddy instance that owns the certificate flow.
 
 ## 9. Verify the deployment
 
