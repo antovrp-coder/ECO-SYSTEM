@@ -269,7 +269,10 @@
             </mat-form-field>
 
             <div class="auth-actions">
-              <button mat-flat-button color="primary" type="submit">{{ t('login') }}</button>
+              <button mat-flat-button color="primary" type="button" (click)="singleClickLogin()" [disabled]="isSingleClickLoginBusy">
+                {{ isSingleClickLoginBusy ? t('login') + '...' : t('login') }}
+              </button>
+
               <button *ngIf="passkeySupported && loginPasskeyAvailable" mat-stroked-button type="button" (click)="loginWithPasskey()" [disabled]="passkeyBusy">
                 {{ passkeyBusy ? t('waitingForDevice') : t('loginWithFingerprint') }}
               </button>
@@ -421,5 +424,7 @@
   </mat-sidenav-content>
 </mat-sidenav-container>
 
+
 <app-notification></app-notification>
+
 

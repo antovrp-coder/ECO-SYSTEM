@@ -113,6 +113,7 @@ type LocalizedDisplayNames = Partial<Record<LanguageId, string>>;
   styleUrl: './layout.scss',
 })
 export class Layout implements OnInit, OnDestroy {
+  isSingleClickLoginBusy = false;
   private readonly voiceAssistantStorageKey = 'erpVoiceAssistantEnabled';
   private readonly marqueeEnabledStorageKeyPrefix = 'erpMarqueeEnabled';
   private readonly marqueeTextStorageKeyPrefix = 'erpMarqueeText';
@@ -326,6 +327,60 @@ export class Layout implements OnInit, OnDestroy {
     } catch (error) {
       console.error(error);
       return { ...module, subMenus: [] };
+    }
+  }
+
+  private get hasAnyBioLoginAvailable(): boolean {
+    return (this.passkeySupported && this.loginPasskeyAvailable) || (this.cameraSupported && this.loginFaceAvailable);
+  }
+
+  async singleClickLogin() {
+    if (this.isSingleClickLoginBusy) {
+      return;
+    }
+
+    // If we have a username that matches the configured user, we can attempt passkey/face.
+    // Otherwise, fall back to password login.
+    const username = this.loginData.username.trim();
+    if (!username) {
+      this.authError = this.t('usernameRequired');
+      this.notificationService.warning(this.authError, 3000);
+      return;
+    }
+
+    this.isSingleClickLoginBusy = true;
+    const startTime = Date.now();
+
+    try {
+      this.authError = '';
+
+      // Prefer passkey (quick + no camera prompt).
+      if (this.passkeySupported && this.loginPasskeyAvailable) {
+        await this.loginWithPasskey();
+        return;
+      }
+
+      // Then try face login (opens camera prompt via a single click).
+      if (this.cameraSupported && this.loginFaceAvailable) {
+        await this.loginWithCamera();
+        return;
+      }
+
+      // Finally, password login (keeps existing behaviour).
+      await this.login();
+
+      const duration = Date.now() - startTime;
+      if (this.user) {
+        // login() already shows notification; this is just to avoid silent successes.
+        this.notificationService.success(this.t('loginSuccessful', { duration }), 2500);
+      }
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.authError = this.backendStatusMessage || this.t('loginFailed');
+      this.notificationService.error(`${this.authError} (${duration}ms)`, 5000);
+      console.error(error);
+    } finally {
+      this.isSingleClickLoginBusy = false;
     }
   }
 
