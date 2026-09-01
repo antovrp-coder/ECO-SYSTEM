@@ -236,7 +236,7 @@ export class HrWorkspaceComponent {
 
   private async loadWorkspace(tabName: string): Promise<void> {
     const version = ++this.loadVersion;
-    this.loading = true;
+    // Keep previous content visible while the new workspace data is fetched.
     this.error = '';
 
     try {
@@ -268,7 +268,7 @@ export class HrWorkspaceComponent {
       this.error = this.describeError(error, 'Failed to load HR workspace data.');
     } finally {
       if (version === this.loadVersion) {
-        this.loading = false;
+        // keep loading false
       }
     }
   }

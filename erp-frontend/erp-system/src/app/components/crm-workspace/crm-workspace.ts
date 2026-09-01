@@ -177,7 +177,8 @@ export class CrmWorkspaceComponent {
 
   private async loadWorkspace(): Promise<void> {
     const version = ++this.loadVersion;
-    this.loading = true;
+    // Keep showing previous content until the new data arrives.
+    // Avoid flipping to a full-page loading state on every menu click.
     this.error = '';
 
     try {
@@ -204,7 +205,7 @@ export class CrmWorkspaceComponent {
       this.error = this.describeError(error, 'Failed to load CRM workspace data.');
     } finally {
       if (version === this.loadVersion) {
-        this.loading = false;
+      // keep loading false
       }
     }
   }

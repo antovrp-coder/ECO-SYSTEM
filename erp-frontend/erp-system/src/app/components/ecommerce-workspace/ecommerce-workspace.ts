@@ -590,7 +590,7 @@ export class EcommerceWorkspaceComponent {
 			this.error = this.describeError(error, 'Failed to load e-commerce data.');
 		} finally {
 			if (loadVersion === this.loadVersion) {
-				this.loading = false;
+				// keep loading false
 			}
 		}
 	}

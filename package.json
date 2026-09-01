@@ -1,0 +1,11 @@
+{
+  "name": "eco-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Enterprise Resource Planning & POS System",
+  "scripts": {
+    "build": "cd erp-frontend/erp-system && npm install --include=dev && npm run build",
+    "install": "cd erp-frontend/erp-system && npm install --include=dev",
+    "start": "cd erp-frontend/erp-system && npm start"
+  }
+}

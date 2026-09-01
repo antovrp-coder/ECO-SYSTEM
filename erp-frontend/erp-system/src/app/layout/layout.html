@@ -36,7 +36,15 @@
     </div>
   </mat-sidenav>
   <mat-sidenav-content class="sidenav-content">
-    <mat-toolbar *ngIf="user" color="primary" class="top-toolbar">
+    <div class="app-readable-status" aria-live="polite" *ngIf="!user">
+      {{ t('loginTab') }}
+    </div>
+
+    <div class="app-readable-status" aria-live="polite" *ngIf="user && !selectedModule">
+      Loading workspace...
+    </div>
+
+    <mat-toolbar *ngIf="user" color="primary" class="top-toolbar" [hidden]="!selectedModule">
       <div class="workspace-tabs-row" *ngIf="user && tabs.length > 0">
         <div class="workspace-tabs-strip" role="tablist" aria-label="Open modules">
           <button
@@ -269,7 +277,10 @@
             </mat-form-field>
 
             <div class="auth-actions">
-              <button mat-flat-button color="primary" type="submit">{{ t('login') }}</button>
+              <button mat-flat-button color="primary" type="button" (click)="singleClickLogin()" [disabled]="isSingleClickLoginBusy">
+                {{ isSingleClickLoginBusy ? t('login') + '...' : t('login') }}
+              </button>
+
               <button *ngIf="passkeySupported && loginPasskeyAvailable" mat-stroked-button type="button" (click)="loginWithPasskey()" [disabled]="passkeyBusy">
                 {{ passkeyBusy ? t('waitingForDevice') : t('loginWithFingerprint') }}
               </button>
@@ -421,5 +432,8 @@
   </mat-sidenav-content>
 </mat-sidenav-container>
 
+
 <app-notification></app-notification>
+
+
 
