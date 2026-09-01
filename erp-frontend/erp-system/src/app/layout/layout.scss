@@ -359,6 +359,12 @@
   text-align: inherit;
 }
 
+.app-readable-status {
+  padding: 12px 0;
+  color: var(--app-text);
+  font-size: 0.95rem;
+}
+
 .main-content {
   flex: 1;
   padding: 16px;

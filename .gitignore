@@ -1,0 +1,27 @@
+# Compiled binaries
+*.exe
+*.exe~
+test_build.exe
+erp-backend/backend.exe
+erp-backend/backend.exe~
+erp-backend/erp-backend.exe
+erp-backend/erp-backend-new.exe
+erp-backend/test_build.exe
+
+# Dependencies & Build artifacts
+node_modules/
+dist/
+.angular/
+
+# Environment files
+.env
+.env.prod
+!.env.example
+!.env.prod.example
+
+# IDEs & System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
