@@ -3,35 +3,35 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "npx ng serve",
-    "build": "cross-env NODE_OPTIONS=--max_old_space_size=3072 npx ng build",
-    "watch": "npx ng build --watch --configuration development",
-    "test": "npx ng test"
+    "start": "ng serve",
+    "build": "cross-env NODE_OPTIONS=--max_old_space_size=3072 ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test"
   },
   "private": true,
   "packageManager": "npm@11.12.1",
   "dependencies": {
     "@angular/animations": "^21.2.13",
+    "@angular/build": "^21.2.11",
     "@angular/cdk": "^21.2.11",
+    "@angular/cli": "^21.2.11",
     "@angular/common": "^21.2.0",
     "@angular/compiler": "^21.2.0",
+    "@angular/compiler-cli": "^21.2.0",
     "@angular/core": "^21.2.0",
     "@angular/forms": "^21.2.0",
     "@angular/material": "^21.2.11",
     "@angular/platform-browser": "^21.2.0",
     "@angular/router": "^21.2.0",
     "@simplewebauthn/browser": "^13.3.0",
+    "cross-env": "^10.1.0",
     "rxjs": "~7.8.0",
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "typescript": "~5.9.2"
   },
   "devDependencies": {
-    "@angular/build": "^21.2.11",
-    "@angular/cli": "^21.2.11",
-    "@angular/compiler-cli": "^21.2.0",
-    "cross-env": "^10.1.0",
     "jsdom": "^28.0.0",
     "prettier": "^3.8.1",
-    "typescript": "~5.9.2",
     "vitest": "^4.0.8"
   }
 }

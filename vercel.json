@@ -1,9 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": "cd erp-frontend/erp-system && npm install && npm run build",
+  "buildCommand": "cd erp-frontend/erp-system && npm install --include=dev && npm run build",
   "outputDirectory": "erp-frontend/erp-system/dist/erp-system/browser",
-  "installCommand": "cd erp-frontend/erp-system && npm install",
+  "installCommand": "cd erp-frontend/erp-system && npm install --include=dev",
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
