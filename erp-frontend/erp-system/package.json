@@ -3,10 +3,10 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "build": "cross-env NODE_OPTIONS=--max_old_space_size=3072 ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "start": "npx ng serve",
+    "build": "cross-env NODE_OPTIONS=--max_old_space_size=3072 npx ng build",
+    "watch": "npx ng build --watch --configuration development",
+    "test": "npx ng test"
   },
   "private": true,
   "packageManager": "npm@11.12.1",

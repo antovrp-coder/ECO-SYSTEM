@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "angular",
-  "buildCommand": "npm run build",
+  "framework": null,
+  "buildCommand": "npm install && npm run build",
   "outputDirectory": "dist/erp-system/browser",
   "installCommand": "npm install",
   "cleanUrls": true,
