@@ -4,8 +4,8 @@
   "private": true,
   "description": "Enterprise Resource Planning & POS System",
   "scripts": {
-    "build": "cd erp-frontend/erp-system && npm install --include=dev && npm run build",
-    "install": "cd erp-frontend/erp-system && npm install --include=dev",
-    "start": "cd erp-frontend/erp-system && npm start"
+    "build": "cd erp-frontend && npm install --include=dev && npm run build",
+    "install": "cd erp-frontend && npm install --include=dev",
+    "start": "cd erp-frontend && npm start"
   }
 }
