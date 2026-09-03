@@ -1,7 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
-import { X, Camera, RefreshCw, CheckCircle2, AlertCircle, ScanFace, FlipHorizontal } from 'lucide-react';
+import {
+  X,
+  Camera,
+  RefreshCw,
+  CheckCircle2,
+  AlertCircle,
+  ScanFace,
+  FlipHorizontal,
+  RotateCcw,
+  Check,
+  Eye,
+} from 'lucide-react';
 
 interface FaceAuthModalProps {
   isOpen: boolean;
@@ -23,12 +34,17 @@ export const FaceAuthModal: React.FC<FaceAuthModalProps> = ({
   const streamRef = useRef<MediaStream | null>(null);
 
   const { loginWithFace, enrollFace } = useAuth();
-  const { error: notifyError } = useNotification();
+  const { error: notifyError, success: notifySuccess } = useNotification();
 
   const [cameraActive, setCameraActive] = useState(false);
-  const [isMirrored, setIsMirrored] = useState<boolean>(true);
+  // false = Real / True Camera Sensor Image; true = Mirrored Selfie Image
+  const [isMirrored, setIsMirrored] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusMessage, setStatusMessage] = useState('Position your face in the camera frame');
+
+  // Preview state after capture (allows flipping between Real & Mirrored before saving)
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewIsMirrored, setPreviewIsMirrored] = useState<boolean>(false);
 
   const startCamera = async () => {
     try {
@@ -42,7 +58,7 @@ export const FaceAuthModal: React.FC<FaceAuthModalProps> = ({
         await videoRef.current.play();
       }
       setCameraActive(true);
-      setStatusMessage('Camera ready. Look directly into the camera.');
+      setStatusMessage('Camera ready. Choose Real or Mirrored mode, then capture.');
     } catch (err: any) {
       notifyError('Unable to access webcam: ' + (err.message || 'Permission denied'));
       setStatusMessage('Camera access failed.');
@@ -59,9 +75,11 @@ export const FaceAuthModal: React.FC<FaceAuthModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
+      setPreviewImage(null);
       void startCamera();
     } else {
       stopCamera();
+      setPreviewImage(null);
     }
     return () => {
       stopCamera();
@@ -142,46 +160,93 @@ export const FaceAuthModal: React.FC<FaceAuthModalProps> = ({
     return descriptor.map((v) => Number((v / norm).toFixed(6)));
   };
 
-  const captureFace = async () => {
+  // Step 1: Capture snapshot from video feed
+  const takeSnapshot = () => {
     if (!videoRef.current || !canvasRef.current) return;
 
-    setIsProcessing(true);
-    setStatusMessage('Scanning biometric features...');
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = 320;
+    canvas.height = 240;
 
-    try {
-      const video = videoRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.save();
+    if (isMirrored) {
+      // Draw flipped horizontally for mirror mode
+      ctx.translate(320, 0);
+      ctx.scale(-1, 1);
+    }
+    ctx.drawImage(video, 0, 0, 320, 240);
+    ctx.restore();
+
+    const imageBase64 = canvas.toDataURL('image/jpeg', 0.85);
+    setPreviewImage(imageBase64);
+    setPreviewIsMirrored(isMirrored);
+
+    if (mode === 'login') {
+      // For login mode, proceed directly with authentication
+      void processAuthentication(canvas, ctx, imageBase64);
+    } else {
+      setStatusMessage('Snapshot captured. You can flip between Real & Mirrored before saving.');
+    }
+  };
+
+  // Flip the captured photo horizontally in real-time
+  const flipCapturedSnapshot = () => {
+    if (!previewImage || !canvasRef.current) return;
+
+    const img = new Image();
+    img.onload = () => {
       const canvas = canvasRef.current;
-      
-      // Standardize snapshot size to 320x240 for instantaneous processing and compact storage
+      if (!canvas) return;
       canvas.width = 320;
       canvas.height = 240;
-
       const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('Canvas context unavailable');
+      if (!ctx) return;
 
+      // Flip the existing preview image
       ctx.save();
-      if (isMirrored) {
-        // Flip horizontally to take the exact mirror image as seen on screen
-        ctx.translate(320, 0);
-        ctx.scale(-1, 1);
-      }
-      ctx.drawImage(video, 0, 0, 320, 240);
+      ctx.translate(320, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(img, 0, 0, 320, 240);
       ctx.restore();
 
-      const imageBase64 = canvas.toDataURL('image/jpeg', 0.75);
+      const newBase64 = canvas.toDataURL('image/jpeg', 0.85);
+      setPreviewImage(newBase64);
+      setPreviewIsMirrored((prev) => !prev);
+    };
+    img.src = previewImage;
+  };
 
-      // Extract 128-d biometric descriptor instantly
+  // Step 2: Finalize Enrollment or Login
+  const confirmAndSavePhoto = async () => {
+    if (!canvasRef.current || !previewImage) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    await processAuthentication(canvas, ctx, previewImage);
+  };
+
+  const processAuthentication = async (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, imageBase64: string) => {
+    setIsProcessing(true);
+    setStatusMessage('Processing biometric features...');
+
+    try {
       const descriptor = extractBiometricFeatures(canvas, ctx);
 
       if (mode === 'login') {
-        setStatusMessage('Verifying biometric profile...');
+        setStatusMessage('Verifying biometric identity...');
         await loginWithFace(descriptor, username);
         stopCamera();
         onClose();
         if (onSuccess) onSuccess();
       } else {
-        setStatusMessage('Enrolling face signature...');
+        setStatusMessage('Saving biometric profile & photo...');
         await enrollFace(username, descriptor, imageBase64);
+        notifySuccess(`Face & profile photo enrolled successfully as ${previewIsMirrored ? 'Mirrored Image' : 'Real Image'}!`);
         stopCamera();
         onClose();
         if (onSuccess) onSuccess();
@@ -193,11 +258,16 @@ export const FaceAuthModal: React.FC<FaceAuthModalProps> = ({
     }
   };
 
+  const retakePhoto = () => {
+    setPreviewImage(null);
+    setStatusMessage('Camera ready. Look directly into the camera.');
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="erp-modal-overlay">
-      <div className="erp-modal" style={{ padding: '2rem', maxWidth: '28rem', textAlign: 'center' }}>
+      <div className="erp-modal" style={{ padding: '2rem', maxWidth: '30rem', textAlign: 'center' }}>
         <button
           onClick={() => {
             stopCamera();
@@ -232,13 +302,75 @@ export const FaceAuthModal: React.FC<FaceAuthModalProps> = ({
         </div>
 
         <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--app-text)' }}>
-          {mode === 'login' ? 'Face Recognition Sign In' : 'Enroll Face Biometric'}
+          {mode === 'login' ? 'Face Recognition Sign In' : 'Enroll Face & Profile Photo'}
         </h2>
-        <p style={{ fontSize: '0.8125rem', color: 'var(--app-text-subtle)', marginTop: '0.25rem', marginBottom: '1.25rem' }}>
+        <p style={{ fontSize: '0.8125rem', color: 'var(--app-text-subtle)', marginTop: '0.25rem', marginBottom: '1rem' }}>
           {statusMessage}
         </p>
 
-        {/* Video stream container */}
+        {/* Real vs Mirrored Live Selection Tabs */}
+        {!previewImage && (
+          <div
+            style={{
+              display: 'flex',
+              background: 'var(--app-hover)',
+              padding: '0.25rem',
+              borderRadius: '0.625rem',
+              marginBottom: '1rem',
+              border: '1px solid var(--app-border)',
+              gap: '0.25rem',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setIsMirrored(false)}
+              style={{
+                flex: 1,
+                padding: '0.4rem 0.6rem',
+                borderRadius: '0.45rem',
+                border: 'none',
+                background: !isMirrored ? 'var(--app-primary)' : 'transparent',
+                color: !isMirrored ? '#fff' : 'var(--app-text)',
+                fontWeight: !isMirrored ? 700 : 500,
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.35rem',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <Eye size={14} />
+              <span>📷 Real / True Photo</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsMirrored(true)}
+              style={{
+                flex: 1,
+                padding: '0.4rem 0.6rem',
+                borderRadius: '0.45rem',
+                border: 'none',
+                background: isMirrored ? 'var(--app-primary)' : 'transparent',
+                color: isMirrored ? '#fff' : 'var(--app-text)',
+                fontWeight: isMirrored ? 700 : 500,
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.35rem',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <FlipHorizontal size={14} />
+              <span>🪞 Mirrored Selfie</span>
+            </button>
+          </div>
+        )}
+
+        {/* Video / Snapshot Display */}
         <div
           style={{
             position: 'relative',
@@ -254,122 +386,146 @@ export const FaceAuthModal: React.FC<FaceAuthModalProps> = ({
             border: '2px solid var(--app-primary)',
           }}
         >
-          {/* Mirror Camera Overlay Button */}
-          <button
-            type="button"
-            onClick={() => setIsMirrored((prev) => !prev)}
-            style={{
-              position: 'absolute',
-              top: '0.75rem',
-              left: '0.75rem',
-              background: isMirrored ? 'rgba(56, 189, 248, 0.25)' : 'rgba(15, 23, 42, 0.75)',
-              backdropFilter: 'blur(8px)',
-              color: isMirrored ? '#38bdf8' : '#e2e8f0',
-              border: isMirrored ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.25)',
-              borderRadius: '0.5rem',
-              padding: '0.35rem 0.65rem',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-              zIndex: 10,
-              cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-              transition: 'all 0.2s ease',
-            }}
-            title="Toggle Mirror Image"
-          >
-            <FlipHorizontal size={14} />
-            <span>{isMirrored ? 'Mirror: ON' : 'Mirror: OFF'}</span>
-          </button>
+          {previewImage ? (
+            <img
+              src={previewImage}
+              alt="Captured biometric preview"
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : (
+            <>
+              <video
+                ref={videoRef}
+                playsInline
+                muted
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  transform: isMirrored ? 'scaleX(-1)' : 'scaleX(1)',
+                  transition: 'transform 0.25s ease',
+                }}
+              />
+              {/* Scanner targeting overlay */}
+              <div
+                style={{
+                  position: 'absolute',
+                  width: '160px',
+                  height: '160px',
+                  border: '2px dashed #38bdf8',
+                  borderRadius: '50%',
+                  pointerEvents: 'none',
+                  animation: 'pulseGlow 2s infinite',
+                }}
+              />
+            </>
+          )}
 
-          <video
-            ref={videoRef}
-            playsInline
-            muted
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              transform: isMirrored ? 'scaleX(-1)' : 'scaleX(1)',
-              transition: 'transform 0.25s ease',
-            }}
-          />
-          <canvas ref={canvasRef} style={{ display: 'none' }} />
-
-          {/* Scanner targeting overlay */}
+          {/* Active Mode Indicator Badge */}
           <div
             style={{
               position: 'absolute',
-              width: '160px',
-              height: '160px',
-              border: '2px dashed #38bdf8',
-              borderRadius: '50%',
-              pointerEvents: 'none',
-              animation: 'pulseGlow 2s infinite',
-            }}
-          />
-        </div>
-
-        {/* Mirror Mode Checkbox / Options Row */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem',
-            marginBottom: '1.25rem',
-            padding: '0.45rem 0.75rem',
-            borderRadius: '0.5rem',
-            background: 'var(--app-hover)',
-            border: '1px solid var(--app-border)',
-          }}
-        >
-          <label
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              color: isMirrored ? 'var(--app-primary)' : 'var(--app-muted)',
-              cursor: 'pointer',
-              userSelect: 'none',
+              bottom: '0.5rem',
+              right: '0.5rem',
+              background: 'rgba(0, 0, 0, 0.75)',
+              backdropFilter: 'blur(6px)',
+              color: '#fff',
+              fontSize: '0.7rem',
+              fontWeight: 700,
+              padding: '0.2rem 0.5rem',
+              borderRadius: '0.375rem',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
             }}
           >
-            <input
-              type="checkbox"
-              checked={isMirrored}
-              onChange={(e) => setIsMirrored(e.target.checked)}
-              style={{ accentColor: 'var(--app-primary)', width: '15px', height: '15px', cursor: 'pointer' }}
-            />
-            <FlipHorizontal size={14} />
-            <span>Mirror Image Option ({isMirrored ? 'Enabled' : 'Disabled'})</span>
-          </label>
+            {previewImage
+              ? previewIsMirrored
+                ? '🪞 Mirrored Photo'
+                : '📷 Real Photo'
+              : isMirrored
+              ? '🪞 Mirrored Mode'
+              : '📷 Real Mode'}
+          </div>
+
+          <canvas ref={canvasRef} style={{ display: 'none' }} />
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
-          <button
-            type="button"
-            onClick={captureFace}
-            disabled={!cameraActive || isProcessing}
-            className="erp-btn erp-btn-primary"
-            style={{ flex: 1, padding: '0.75rem' }}
-          >
-            {isProcessing ? (
-              <>
-                <RefreshCw size={16} className="animate-spin" />
-                <span>Processing...</span>
-              </>
-            ) : (
-              <>
-                <Camera size={16} />
-                <span>{mode === 'login' ? 'Authenticate Face' : 'Capture & Save'}</span>
-              </>
-            )}
-          </button>
-        </div>
+        {/* Actions Controls */}
+        {previewImage ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {/* Flip Horizontal button on captured photo */}
+            <button
+              type="button"
+              onClick={flipCapturedSnapshot}
+              className="erp-btn erp-btn-secondary"
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+              }}
+            >
+              <FlipHorizontal size={16} />
+              <span>Flip Image (Switch to {previewIsMirrored ? 'Real Photo' : 'Mirrored Photo'})</span>
+            </button>
+
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                type="button"
+                onClick={retakePhoto}
+                className="erp-btn erp-btn-secondary"
+                style={{ flex: 1, padding: '0.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}
+              >
+                <RotateCcw size={16} />
+                <span>Retake</span>
+              </button>
+              <button
+                type="button"
+                onClick={confirmAndSavePhoto}
+                disabled={isProcessing}
+                className="erp-btn erp-btn-primary"
+                style={{ flex: 2, padding: '0.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}
+              >
+                {isProcessing ? (
+                  <>
+                    <RefreshCw size={16} className="animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check size={16} />
+                    <span>Save {previewIsMirrored ? 'Mirrored' : 'Real'} Photo</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+            <button
+              type="button"
+              onClick={takeSnapshot}
+              disabled={!cameraActive || isProcessing}
+              className="erp-btn erp-btn-primary"
+              style={{ flex: 1, padding: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+            >
+              {isProcessing ? (
+                <>
+                  <RefreshCw size={16} className="animate-spin" />
+                  <span>Processing...</span>
+                </>
+              ) : (
+                <>
+                  <Camera size={16} />
+                  <span>{mode === 'login' ? 'Authenticate Face' : `Take ${isMirrored ? 'Mirrored' : 'Real'} Photo`}</span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
