@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
-import { X, Camera, RefreshCw, CheckCircle2, AlertCircle, ScanFace } from 'lucide-react';
+import { X, Camera, RefreshCw, CheckCircle2, AlertCircle, ScanFace, FlipHorizontal } from 'lucide-react';
 
 interface FaceAuthModalProps {
   isOpen: boolean;
@@ -26,6 +26,7 @@ export const FaceAuthModal: React.FC<FaceAuthModalProps> = ({
   const { error: notifyError } = useNotification();
 
   const [cameraActive, setCameraActive] = useState(false);
+  const [isMirrored, setIsMirrored] = useState<boolean>(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusMessage, setStatusMessage] = useState('Position your face in the camera frame');
 
@@ -158,7 +159,15 @@ export const FaceAuthModal: React.FC<FaceAuthModalProps> = ({
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error('Canvas context unavailable');
 
+      ctx.save();
+      if (isMirrored) {
+        // Flip horizontally to take the exact mirror image as seen on screen
+        ctx.translate(320, 0);
+        ctx.scale(-1, 1);
+      }
       ctx.drawImage(video, 0, 0, 320, 240);
+      ctx.restore();
+
       const imageBase64 = canvas.toDataURL('image/jpeg', 0.75);
 
       // Extract 128-d biometric descriptor instantly
@@ -238,18 +247,54 @@ export const FaceAuthModal: React.FC<FaceAuthModalProps> = ({
             backgroundColor: '#000',
             borderRadius: '0.75rem',
             overflow: 'hidden',
-            marginBottom: '1.25rem',
+            marginBottom: '1rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             border: '2px solid var(--app-primary)',
           }}
         >
+          {/* Mirror Camera Overlay Button */}
+          <button
+            type="button"
+            onClick={() => setIsMirrored((prev) => !prev)}
+            style={{
+              position: 'absolute',
+              top: '0.75rem',
+              left: '0.75rem',
+              background: isMirrored ? 'rgba(56, 189, 248, 0.25)' : 'rgba(15, 23, 42, 0.75)',
+              backdropFilter: 'blur(8px)',
+              color: isMirrored ? '#38bdf8' : '#e2e8f0',
+              border: isMirrored ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.25)',
+              borderRadius: '0.5rem',
+              padding: '0.35rem 0.65rem',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              zIndex: 10,
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+              transition: 'all 0.2s ease',
+            }}
+            title="Toggle Mirror Image"
+          >
+            <FlipHorizontal size={14} />
+            <span>{isMirrored ? 'Mirror: ON' : 'Mirror: OFF'}</span>
+          </button>
+
           <video
             ref={videoRef}
             playsInline
             muted
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              transform: isMirrored ? 'scaleX(-1)' : 'scaleX(1)',
+              transition: 'transform 0.25s ease',
+            }}
           />
           <canvas ref={canvasRef} style={{ display: 'none' }} />
 
@@ -265,6 +310,43 @@ export const FaceAuthModal: React.FC<FaceAuthModalProps> = ({
               animation: 'pulseGlow 2s infinite',
             }}
           />
+        </div>
+
+        {/* Mirror Mode Checkbox / Options Row */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            marginBottom: '1.25rem',
+            padding: '0.45rem 0.75rem',
+            borderRadius: '0.5rem',
+            background: 'var(--app-hover)',
+            border: '1px solid var(--app-border)',
+          }}
+        >
+          <label
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              color: isMirrored ? 'var(--app-primary)' : 'var(--app-muted)',
+              cursor: 'pointer',
+              userSelect: 'none',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={isMirrored}
+              onChange={(e) => setIsMirrored(e.target.checked)}
+              style={{ accentColor: 'var(--app-primary)', width: '15px', height: '15px', cursor: 'pointer' }}
+            />
+            <FlipHorizontal size={14} />
+            <span>Mirror Image Option ({isMirrored ? 'Enabled' : 'Disabled'})</span>
+          </label>
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
