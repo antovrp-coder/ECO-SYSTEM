@@ -51,6 +51,18 @@ const DEFAULT_MODULES: ModuleItem[] = [
   { id: 5, name: 'Finance', icon: 'DollarSign', subMenus: ['Overview', 'General Ledger', 'Invoices', 'Expense Claims', 'Reports'] },
   { id: 6, name: 'POS', icon: 'Store', subMenus: ['Register', 'Orders', 'Receipts'] },
   { id: 7, name: 'Ecommerce', icon: 'ShoppingBag', subMenus: ['Storefront', 'Products', 'Orders', 'Promotions', 'Analytics'] },
+  {
+    id: 8,
+    name: 'Administration',
+    icon: 'ShieldCheck',
+    subMenus: [
+      'Assign Menu Roles',
+      'Roles & Permissions',
+      'User Management',
+      'User Login & Geo Activity',
+      'Audit & Security Logs',
+    ],
+  },
 ];
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
