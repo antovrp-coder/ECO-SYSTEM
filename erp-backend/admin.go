@@ -11,8 +11,15 @@ import (
 
 // Ensure Admin Data (Roles, Menu Assignments, Audit Logs, User Sessions, and Administration module) is seeded.
 func ensureAdminDataSeeded() {
-	// AutoMigrate admin models
-	_ = db.AutoMigrate(&Role{}, &RoleMenuAssignment{}, &AuditLog{}, &UserSessionActivity{})
+	// AutoMigrate all models including User
+	_ = db.AutoMigrate(&User{}, &Role{}, &RoleMenuAssignment{}, &AuditLog{}, &UserSessionActivity{})
+
+	// Ensure role & is_active columns exist on users table
+	db.Exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(100) DEFAULT 'Administrator';")
+	db.Exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;")
+
+	// Ensure admin and User accounts are assigned Administrator role
+	db.Exec("UPDATE users SET role = 'Administrator' WHERE LOWER(username) = 'admin' OR LOWER(username) = 'user' OR role IS NULL OR role = '' OR LOWER(role) = 'admin';")
 
 	// 1. Ensure Roles exist
 	var roleCount int64
@@ -336,6 +343,18 @@ func listAdminRoles(c *gin.Context) {
 	if err := db.Order("id asc").Find(&roles).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	}
+	for i := range roles {
+		var count int64
+		db.Model(&User{}).Where("role = ?", roles[i].Name).Count(&count)
+		if roles[i].Name == "Administrator" {
+			var adminCount int64
+			db.Model(&User{}).Where("role = ? OR username = 'admin'", "Administrator").Count(&adminCount)
+			if adminCount > count {
+				count = adminCount
+			}
+		}
+		roles[i].MemberCount = int(count)
 	}
 	c.JSON(http.StatusOK, roles)
 }

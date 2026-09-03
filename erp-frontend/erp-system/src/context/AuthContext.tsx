@@ -58,7 +58,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const saved = localStorage.getItem('erpUser');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const u = JSON.parse(saved);
+        if (u) {
+          const uLower = (u.username || '').toLowerCase().trim();
+          const rLower = (u.role || '').toLowerCase().trim();
+          if (uLower === 'admin' || uLower === 'user' || rLower === 'admin' || rLower === 'administrator') {
+            u.role = 'Administrator';
+          }
+        }
+        return u;
       } catch {
         return null;
       }
@@ -74,15 +82,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const { success, error: notifyError } = useNotification();
   const { t, translateBackendError } = useI18n();
 
-  const userRole = user?.role || (user?.username === 'admin' ? 'Administrator' : 'Staff / Viewer');
+  const isAdministratorRole = useCallback((role?: string, username?: string) => {
+    const r = (role || '').toLowerCase().trim();
+    const u = (username || '').toLowerCase().trim();
+    return (
+      r === 'administrator' ||
+      r === 'admin' ||
+      r.includes('admin') ||
+      u === 'admin' ||
+      u === 'user'
+    );
+  }, []);
+
+  const userRole = isAdministratorRole(user?.role, user?.username)
+    ? 'Administrator'
+    : user?.role || 'Staff / Viewer';
 
   const refreshPermissions = useCallback(async () => {
     if (!user) {
       setRolePermissions({});
       return;
     }
-    const currentRole = user.role || (user.username === 'admin' ? 'Administrator' : 'Staff / Viewer');
-    if (currentRole === 'Administrator' || user.username === 'admin') {
+    if (isAdministratorRole(user.role, user.username)) {
       const fullPerms: Record<string, RolePermission> = {};
       ['Sales', 'POS', 'Inventory', 'HR', 'CRM', 'Finance', 'Purchase', 'E-Commerce', 'Ecommerce', 'Administration', 'Admin'].forEach((m) => {
         fullPerms[m.toLowerCase()] = { can_view: true, can_create: true, can_edit: true, can_delete: true };
@@ -91,6 +112,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return;
     }
 
+    const currentRole = user.role || 'Staff / Viewer';
     try {
       const res = await fetch(`/api/admin/menu-assignments?role=${encodeURIComponent(currentRole)}`);
       if (res.ok) {
@@ -115,7 +137,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch {
       // Fallback
     }
-  }, [user]);
+  }, [user, isAdministratorRole]);
 
   useEffect(() => {
     void refreshPermissions();
@@ -124,9 +146,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const canAccessModule = useCallback(
     (moduleName: string): boolean => {
       if (!user) return false;
-      const currentRole = user.role || (user.username === 'admin' ? 'Administrator' : 'Staff / Viewer');
-      if (currentRole === 'Administrator' || user.username === 'admin') return true;
+      if (isAdministratorRole(user.role, user.username)) return true;
 
+      const currentRole = user.role || 'Staff / Viewer';
       const modLower = moduleName.toLowerCase();
       const modClean = modLower.replace(/[^a-z0-9]/g, '');
 
@@ -144,7 +166,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // If no assignment exists for this role, access is restricted
       return false;
     },
-    [user, rolePermissions]
+    [user, rolePermissions, isAdministratorRole]
   );
 
   const updateUser = useCallback((updated: Partial<User>) => {

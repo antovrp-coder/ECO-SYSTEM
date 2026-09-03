@@ -876,8 +876,11 @@ func normalizeVoiceCommands(raw map[string][]string) map[string][]string {
 
 func userResponse(user User, hasPasskey bool) gin.H {
 	role := user.Role
-	if role == "" {
-		if user.Username == "admin" {
+	usernameLower := strings.ToLower(user.Username)
+	roleLower := strings.ToLower(role)
+
+	if usernameLower == "admin" || usernameLower == "user" || roleLower == "admin" || roleLower == "administrator" || role == "" {
+		if usernameLower == "admin" || usernameLower == "user" || roleLower == "admin" || roleLower == "administrator" {
 			role = "Administrator"
 		} else {
 			role = "General Manager"

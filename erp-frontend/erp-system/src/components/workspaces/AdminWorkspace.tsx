@@ -147,6 +147,7 @@ export const AdminWorkspace: React.FC<AdminWorkspaceProps> = ({ activeSubMenu = 
   const [customDate, setCustomDate] = useState<string>('');
   const [geoFilter, setGeoFilter] = useState<string>('all');
   const [selectedUserFilter, setSelectedUserFilter] = useState<string>('all');
+  const [userRoleFilter, setUserRoleFilter] = useState<string>('all');
 
   // Drilldown Inspector Modal
   const [inspectedSession, setInspectedSession] = useState<UserSessionActivity | null>(null);
@@ -389,12 +390,18 @@ export const AdminWorkspace: React.FC<AdminWorkspaceProps> = ({ activeSubMenu = 
 
   const filteredUsers = users.filter((u) => {
     const term = userSearch.toLowerCase();
-    return (
+    const matchesSearch =
       u.username.toLowerCase().includes(term) ||
       u.email.toLowerCase().includes(term) ||
       (u.full_name && u.full_name.toLowerCase().includes(term)) ||
-      u.role.toLowerCase().includes(term)
-    );
+      u.role.toLowerCase().includes(term);
+
+    if (!matchesSearch) return false;
+    if (userRoleFilter !== 'all') {
+      const activeRole = u.role || (u.username === 'admin' ? 'Administrator' : 'Staff / Viewer');
+      if (activeRole.toLowerCase() !== userRoleFilter.toLowerCase()) return false;
+    }
+    return true;
   });
 
   const getCountryFlag = (countryCode: string) => {
@@ -520,6 +527,32 @@ export const AdminWorkspace: React.FC<AdminWorkspaceProps> = ({ activeSubMenu = 
                 </button>
               );
             })}
+          </div>
+
+          {/* Active Role Inheritance Banner */}
+          <div
+            style={{
+              padding: '0.75rem 1rem',
+              borderRadius: '0.5rem',
+              background: 'rgba(59, 130, 246, 0.08)',
+              border: '1px solid rgba(59, 130, 246, 0.25)',
+              marginBottom: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '0.5rem',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
+              <ShieldCheck size={18} color="var(--app-primary)" />
+              <span>
+                <strong>Role Inheritance Active:</strong> All users assigned to the <strong>{selectedRole}</strong> role automatically share and inherit these exact menu and workspace permissions.
+              </span>
+            </div>
+            <span className="erp-badge erp-badge-info" style={{ fontSize: '0.725rem' }}>
+              {users.filter((u) => (u.role || (u.username === 'admin' ? 'Administrator' : 'Staff / Viewer')) === selectedRole).length} Active User(s) Assigned
+            </span>
           </div>
 
           {/* Matrix Table */}
@@ -943,7 +976,29 @@ export const AdminWorkspace: React.FC<AdminWorkspaceProps> = ({ activeSubMenu = 
               </p>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {/* Role Filter Selector */}
+              <select
+                value={userRoleFilter}
+                onChange={(e) => setUserRoleFilter(e.target.value)}
+                style={{
+                  padding: '0.4rem 0.65rem',
+                  borderRadius: '0.5rem',
+                  border: '1px solid var(--app-border)',
+                  backgroundColor: 'var(--app-surface)',
+                  color: 'var(--app-text)',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                }}
+              >
+                <option value="all">👥 All Roles ({users.length})</option>
+                {roles.map((r) => (
+                  <option key={r.id} value={r.name}>
+                    {r.name}
+                  </option>
+                ))}
+              </select>
+
               <div style={{ position: 'relative' }}>
                 <Search size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--app-muted)' }} />
                 <input
