@@ -7,6 +7,8 @@ import {
 import { User, ModuleItem } from '../types';
 import { apiRequest } from '../services/api';
 import { useNotification } from './NotificationContext';
+import { useI18n } from '../i18n/I18nContext';
+
 export interface RolePermission {
   can_view: boolean;
   can_create: boolean;

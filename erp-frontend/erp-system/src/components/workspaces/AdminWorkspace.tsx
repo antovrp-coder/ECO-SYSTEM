@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useI18n } from '../../i18n/I18nContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   ShieldCheck,
   Users,
@@ -129,6 +130,7 @@ interface AdminWorkspaceProps {
 export const AdminWorkspace: React.FC<AdminWorkspaceProps> = ({ activeSubMenu = 'Menu Assignment' }) => {
   const { translateEntity } = useI18n();
   const { success, error: notifyError } = useNotification();
+  const { refreshPermissions } = useAuth();
 
   const [roles, setRoles] = useState<RoleItem[]>([]);
   const [selectedRole, setSelectedRole] = useState<string>('Administrator');
@@ -273,6 +275,7 @@ export const AdminWorkspace: React.FC<AdminWorkspaceProps> = ({ activeSubMenu = 
       if (res.ok) {
         success(`Menu assignments updated for role "${selectedRole}"!`);
         void fetchAuditLogs();
+        void refreshPermissions();
       } else {
         notifyError('Failed to save menu assignments');
       }
@@ -304,6 +307,7 @@ export const AdminWorkspace: React.FC<AdminWorkspaceProps> = ({ activeSubMenu = 
         setNewRoleDesc('');
         void fetchRoles();
         void fetchAuditLogs();
+        void refreshPermissions();
       } else {
         notifyError('Could not create role');
       }
@@ -323,6 +327,7 @@ export const AdminWorkspace: React.FC<AdminWorkspaceProps> = ({ activeSubMenu = 
         success(`User role updated to ${role}`);
         setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role } : u)));
         void fetchAuditLogs();
+        void refreshPermissions();
       }
     } catch {
       notifyError('Failed to update role');

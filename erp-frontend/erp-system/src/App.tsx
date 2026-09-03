@@ -40,9 +40,9 @@ const INITIAL_TABS: WorkspaceTab[] = [
 ];
 
 const MainWorkspace: React.FC = () => {
-  const { user, modules } = useAuth();
-  const { t } = useI18n();
-  const { warning } = useNotification();
+  const { user, modules, canAccessModule, userRole } = useAuth();
+  const { t, translateEntity } = useI18n();
+  const { warning, error: notifyError } = useNotification();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [tabs, setTabs] = useState<WorkspaceTab[]>(INITIAL_TABS);
@@ -67,11 +67,19 @@ const MainWorkspace: React.FC = () => {
         window.speechSynthesis.cancel();
       }
     } else {
-      // When user signs in, restore initial workspace tab if none is open
-      setTabs((prev) => (prev.length === 0 ? INITIAL_TABS : prev));
-      setActiveTabId((prev) => (!prev ? 'tab-inventory' : prev));
+      // When user signs in, restore permitted workspace tab
+      setTabs((prev) => {
+        if (prev.length === 0) {
+          const permittedInitial = INITIAL_TABS.filter((t) => canAccessModule(t.moduleName));
+          return permittedInitial;
+        }
+        // Auto-close any tabs that are not permitted for this role
+        const allowed = prev.filter((t) => t.kind === 'profile' || canAccessModule(t.moduleName));
+        return allowed;
+      });
+      setActiveTabId((prev) => (!prev ? (canAccessModule('Inventory') ? 'tab-inventory' : '') : prev));
     }
-  }, [user]);
+  }, [user, canAccessModule]);
 
   const activeTab = tabs.find((t) => t.id === activeTabId) || (tabs.length > 0 ? tabs[0] : null);
 
@@ -80,6 +88,14 @@ const MainWorkspace: React.FC = () => {
       warning(t('authRequiredMessage') || 'Please sign in to access enterprise modules and edit data.');
       setAuthModalMode('login');
       setAuthModalOpen(true);
+      return;
+    }
+
+    // Role-based Menu Access Permission Guard
+    if (!canAccessModule(module.name)) {
+      notifyError(
+        `Access Denied: Your assigned role (${userRole}) is not permitted to access the "${translateEntity(module.name)}" workspace. Please ask an Administrator to assign menu permissions.`
+      );
       return;
     }
 

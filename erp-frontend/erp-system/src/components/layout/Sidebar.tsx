@@ -1,6 +1,7 @@
 import React from 'react';
 import { ModuleItem } from '../../types';
 import { useI18n } from '../../i18n/I18nContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   Package,
   Users,
@@ -56,6 +57,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isAuthenticated = false,
 }) => {
   const { translateEntity, t } = useI18n();
+  const { canAccessModule, userRole } = useAuth();
 
   const getModuleIcon = (mod: ModuleItem) => {
     const IconComponent = ICON_MAP[mod.name] || ICON_MAP[mod.icon] || Package;
@@ -115,12 +117,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {modules.map((mod) => {
           const isActive = activeModuleId === mod.id;
           const translatedName = translateEntity(mod.name);
+          const isPermitted = !isAuthenticated ? false : canAccessModule(mod.name);
 
           return (
             <button
               key={mod.id}
               onClick={() => onSelectModule(mod)}
-              title={collapsed ? translatedName : undefined}
+              title={
+                collapsed
+                  ? !isAuthenticated
+                    ? `${translatedName} (Sign in required)`
+                    : !isPermitted
+                    ? `${translatedName} (Access restricted for ${userRole})`
+                    : translatedName
+                  : undefined
+              }
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -130,12 +141,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 borderRadius: '0.5rem',
                 border: 'none',
                 background: isActive ? 'var(--app-primary-light)' : 'transparent',
-                color: isActive ? 'var(--app-primary)' : 'var(--app-text)',
+                color: isActive
+                  ? 'var(--app-primary)'
+                  : !isPermitted && isAuthenticated
+                  ? 'var(--app-muted)'
+                  : 'var(--app-text)',
                 fontWeight: isActive ? 700 : 500,
                 fontSize: '0.875rem',
                 cursor: 'pointer',
                 textAlign: 'left',
                 justifyContent: collapsed ? 'center' : 'flex-start',
+                opacity: !isPermitted && isAuthenticated ? 0.65 : 1,
                 transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
@@ -151,7 +167,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {!collapsed && (
                 <>
                   <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{translatedName}</span>
-                  {!isAuthenticated && <Lock size={12} style={{ color: 'var(--app-muted)', opacity: 0.7 }} />}
+                  {!isAuthenticated ? (
+                    <Lock size={12} style={{ color: 'var(--app-muted)', opacity: 0.7 }} />
+                  ) : !isPermitted ? (
+                    <span
+                      className="erp-badge erp-badge-warning"
+                      style={{ fontSize: '0.625rem', padding: '0.1rem 0.35rem', borderRadius: '4px', textTransform: 'uppercase' }}
+                    >
+                      Locked
+                    </span>
+                  ) : null}
                 </>
               )}
             </button>
