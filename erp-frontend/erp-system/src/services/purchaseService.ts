@@ -1,0 +1,97 @@
+import { apiRequest } from './api';
+
+export interface PurchaseMetric {
+  label: string;
+  value: string;
+  delta: string;
+  copy: string;
+}
+
+export interface PurchaseOverview {
+  metrics: PurchaseMetric[];
+}
+
+export interface PurchaseRequisition {
+  id: number;
+  request_code: string;
+  title: string;
+  department: string;
+  requested_by: string;
+  priority: string;
+  status: string;
+  target_date: string;
+  estimated_value: string;
+  summary: string;
+}
+
+export interface PurchaseOrder {
+  id: number;
+  order_code: string;
+  vendor_name: string;
+  category: string;
+  status: string;
+  buyer_name: string;
+  expected_receipt: string;
+  value: string;
+  line_items: string;
+  summary: string;
+}
+
+export interface PurchaseVendor {
+  id: number;
+  vendor_code: string;
+  name: string;
+  category: string;
+  region: string;
+  contact_name: string;
+  email: string;
+  lead_time: string;
+  status: string;
+  annual_spend: string;
+}
+
+export interface CreatePurchaseRequisitionPayload {
+  request_code: string;
+  title: string;
+  department: string;
+  requested_by: string;
+  priority: string;
+  status: string;
+  target_date: string;
+  estimated_value: number;
+  summary: string;
+}
+
+export interface CreatePurchaseVendorPayload {
+  vendor_code: string;
+  name: string;
+  category: string;
+  region: string;
+  contact_name: string;
+  email: string;
+  lead_time_days: number;
+  status: string;
+  annual_spend: number;
+}
+
+export const purchaseService = {
+  getOverview: () => apiRequest<PurchaseOverview>('/api/purchase/overview'),
+  getRequisitions: () => apiRequest<PurchaseRequisition[]>('/api/purchase/requisitions'),
+  createRequisition: (payload: CreatePurchaseRequisitionPayload) =>
+    apiRequest<PurchaseRequisition>('/api/purchase/requisitions', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  getOrders: () => apiRequest<PurchaseOrder[]>('/api/purchase/orders'),
+  updateOrderStatus: (orderId: number, status: string) =>
+    apiRequest<PurchaseOrder>(`/api/purchase/orders/${orderId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
+  getVendors: () => apiRequest<PurchaseVendor[]>('/api/purchase/vendors'),
+  createVendor: (payload: CreatePurchaseVendorPayload) =>
+    apiRequest<PurchaseVendor>('/api/purchase/vendors', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+};

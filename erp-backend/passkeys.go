@@ -345,7 +345,7 @@ func beginPasskeyEnrollment(c *gin.Context) {
 			AuthenticatorAttachment: protocol.Platform,
 			RequireResidentKey:      protocol.ResidentKeyRequired(),
 			ResidentKey:             protocol.ResidentKeyRequirementRequired,
-			UserVerification:        protocol.VerificationRequired,
+			UserVerification:        protocol.VerificationPreferred,
 		}),
 	)
 	if err != nil {
@@ -548,7 +548,7 @@ func beginPasskeyLogin(c *gin.Context) {
 
 		options, sessionData, err = webAuthn.BeginLogin(
 			*user,
-			webauthnlib.WithUserVerification(protocol.VerificationRequired),
+			webauthnlib.WithUserVerification(protocol.VerificationPreferred),
 		)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to begin passkey login: %v", err)})
@@ -558,7 +558,7 @@ func beginPasskeyLogin(c *gin.Context) {
 		loginUserID = user.ID
 	} else {
 		options, sessionData, err = webAuthn.BeginDiscoverableLogin(
-			webauthnlib.WithUserVerification(protocol.VerificationRequired),
+			webauthnlib.WithUserVerification(protocol.VerificationPreferred),
 		)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to begin passkey login: %v", err)})
@@ -875,11 +875,20 @@ func normalizeVoiceCommands(raw map[string][]string) map[string][]string {
 }
 
 func userResponse(user User, hasPasskey bool) gin.H {
+	role := user.Role
+	if role == "" {
+		if user.Username == "admin" {
+			role = "Administrator"
+		} else {
+			role = "General Manager"
+		}
+	}
 	return gin.H{
 		"id":                      user.ID,
 		"username":                user.Username,
 		"email":                   user.Email,
 		"full_name":               user.FullName,
+		"role":                    role,
 		"face_image":              user.FaceImage,
 		"has_face_login":          hasFaceDescriptor(user.FaceDescriptor),
 		"has_passkey":             hasPasskey,
