@@ -229,7 +229,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         id: 1,
         username: credentials.username || credentials.email || 'Admin',
         fullName: credentials.username || 'System Admin',
-        email: credentials.email || `${credentials.username || 'admin'}@eco-erp.local`,
+        email: credentials.email || `${credentials.username || 'admin'}@ecosystem.local`,
       };
 
       saveSession(loggedUser, res.token || 'demo-jwt-token');
@@ -282,7 +282,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         id: 1,
         username: username || 'demo_user',
         fullName: username ? username.toUpperCase() : 'Demo Administrator',
-        email: `${username || 'demo'}@eco-erp.local`,
+        email: `${username || 'demo'}@ecosystem.local`,
       };
       saveSession(demoUser, 'demo-token');
       success('Logged in as ' + demoUser.fullName);
@@ -385,7 +385,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       id: finishRes.id || finishRes.user?.id || 1,
       username: finishRes.username || finishRes.user?.username || username || 'Admin',
       fullName: finishRes.full_name || finishRes.user?.fullName || finishRes.username || 'System Admin',
-      email: finishRes.email || finishRes.user?.email || `${username || 'admin'}@eco-erp.local`,
+      email: finishRes.email || finishRes.user?.email || `${username || 'admin'}@ecosystem.local`,
       hasPasskey: true,
       hasFaceLogin: !!(finishRes.has_face_login ?? finishRes.user?.hasFaceLogin),
       faceImage: finishRes.face_image ?? finishRes.user?.faceImage,
@@ -468,7 +468,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       id: res.id || res.user?.id || 1,
       username: targetUsername,
       fullName: res.full_name || res.user?.fullName || res.username || 'System Admin',
-      email: res.email || res.user?.email || `${targetUsername}@eco-erp.local`,
+      email: res.email || res.user?.email || `${targetUsername}@ecosystem.local`,
       hasFaceLogin: true,
       hasPasskey: !!(res.has_passkey ?? res.user?.hasPasskey),
       faceImage: faceImg,

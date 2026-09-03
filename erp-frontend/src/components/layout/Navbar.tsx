@@ -65,7 +65,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div style={{ background: 'rgba(255, 255, 255, 0.2)', padding: '0.35rem', borderRadius: '8px', display: 'flex' }}>
             <Layers size={20} />
           </div>
-          <span>ECO-ERP</span>
+          <span>EcoSystem</span>
         </div>
 
         {activeModuleName && (
