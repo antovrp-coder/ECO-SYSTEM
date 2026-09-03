@@ -51,18 +51,6 @@ const DEFAULT_MODULES: ModuleItem[] = [
   { id: 5, name: 'Finance', icon: 'DollarSign', subMenus: ['Overview', 'General Ledger', 'Invoices', 'Expense Claims', 'Reports'] },
   { id: 6, name: 'POS', icon: 'Store', subMenus: ['Register', 'Orders', 'Receipts'] },
   { id: 7, name: 'Ecommerce', icon: 'ShoppingBag', subMenus: ['Storefront', 'Products', 'Orders', 'Promotions', 'Analytics'] },
-  {
-    id: 8,
-    name: 'Administration',
-    icon: 'ShieldCheck',
-    subMenus: [
-      'Assign Menu Roles',
-      'Roles & Permissions',
-      'User Management',
-      'User Login & Geo Activity',
-      'Audit & Security Logs',
-    ],
-  },
 ];
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -229,7 +217,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         id: 1,
         username: credentials.username || credentials.email || 'Admin',
         fullName: credentials.username || 'System Admin',
-        email: credentials.email || `${credentials.username || 'admin'}@ecosystem.local`,
+        email: credentials.email || `${credentials.username || 'admin'}@eco-erp.local`,
       };
 
       saveSession(loggedUser, res.token || 'demo-jwt-token');
@@ -282,7 +270,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         id: 1,
         username: username || 'demo_user',
         fullName: username ? username.toUpperCase() : 'Demo Administrator',
-        email: `${username || 'demo'}@ecosystem.local`,
+        email: `${username || 'demo'}@eco-erp.local`,
       };
       saveSession(demoUser, 'demo-token');
       success('Logged in as ' + demoUser.fullName);
@@ -385,7 +373,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       id: finishRes.id || finishRes.user?.id || 1,
       username: finishRes.username || finishRes.user?.username || username || 'Admin',
       fullName: finishRes.full_name || finishRes.user?.fullName || finishRes.username || 'System Admin',
-      email: finishRes.email || finishRes.user?.email || `${username || 'admin'}@ecosystem.local`,
+      email: finishRes.email || finishRes.user?.email || `${username || 'admin'}@eco-erp.local`,
       hasPasskey: true,
       hasFaceLogin: !!(finishRes.has_face_login ?? finishRes.user?.hasFaceLogin),
       faceImage: finishRes.face_image ?? finishRes.user?.faceImage,
@@ -468,7 +456,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       id: res.id || res.user?.id || 1,
       username: targetUsername,
       fullName: res.full_name || res.user?.fullName || res.username || 'System Admin',
-      email: res.email || res.user?.email || `${targetUsername}@ecosystem.local`,
+      email: res.email || res.user?.email || `${targetUsername}@eco-erp.local`,
       hasFaceLogin: true,
       hasPasskey: !!(res.has_passkey ?? res.user?.hasPasskey),
       faceImage: faceImg,
