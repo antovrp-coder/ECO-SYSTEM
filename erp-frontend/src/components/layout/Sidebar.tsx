@@ -189,7 +189,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div style={{ padding: '0.875rem', borderTop: '1px solid var(--app-border)', backgroundColor: 'var(--app-hover)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'var(--app-text-subtle)' }}>
             <Sparkles size={14} color="var(--app-primary)" />
-            <span style={{ fontWeight: 600 }}>v2.0 React Enterprise</span>
+            <span style={{ fontWeight: 600 }}>v2.0 EcoSystem</span>
           </div>
         </div>
       )}
