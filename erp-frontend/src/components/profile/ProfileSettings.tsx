@@ -15,6 +15,8 @@ import {
   Trash2,
   CheckCircle2,
   ShieldAlert,
+  ShieldCheck,
+  Lock,
 } from 'lucide-react';
 import { LanguageId } from '../../i18n/translations';
 import { ThemeId } from '../../types';
@@ -24,12 +26,17 @@ interface ProfileSettingsProps {
 }
 
 export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ onOpenFaceEnrollModal }) => {
-  const { user, registerPasskey, disablePasskey, disableFace, updateUser, checkPasskeyStatus, logout } = useAuth();
+  const { user, userRole, registerPasskey, disablePasskey, disableFace, updateUser, checkPasskeyStatus, logout } = useAuth();
   const { language, languages, setLanguage, t, translateEntity } = useI18n();
   const { theme, themes, setTheme } = useTheme();
   const { success, error: notifyError } = useNotification();
 
   const username = user?.username || 'admin';
+  const isAdmin =
+    userRole === 'Administrator' ||
+    (user?.role || '').toLowerCase().includes('admin') ||
+    (user?.username || '').toLowerCase() === 'admin' ||
+    (user?.username || '').toLowerCase() === 'user';
 
   React.useEffect(() => {
     if (user?.username) {
@@ -43,10 +50,10 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ onOpenFaceEnro
 
   // Marquee settings
   const [marqueeEnabled, setMarqueeEnabled] = useState<boolean>(() => {
-    return localStorage.getItem(`erpMarqueeEnabled_${username}`) === 'true';
+    return localStorage.getItem('erpGlobalMarqueeEnabled') === 'true' || localStorage.getItem(`erpMarqueeEnabled_${username}`) === 'true';
   });
   const [marqueeText, setMarqueeText] = useState<string>(() => {
-    return localStorage.getItem(`erpMarqueeText_${username}`) || '✨ Welcome to Enterprise ERP System';
+    return localStorage.getItem('erpGlobalMarqueeText') || localStorage.getItem(`erpMarqueeText_${username}`) || '✨ Welcome to Enterprise ERP System';
   });
 
   // Localized names
@@ -75,9 +82,15 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ onOpenFaceEnro
   }
 
   const handleSaveMarquee = () => {
+    if (!isAdmin) {
+      notifyError('Access Denied: Only Administrators can configure or broadcast the workspace marquee banner.');
+      return;
+    }
     localStorage.setItem(`erpMarqueeEnabled_${username}`, String(marqueeEnabled));
     localStorage.setItem(`erpMarqueeText_${username}`, marqueeText);
-    success('Marquee banner preferences saved!');
+    localStorage.setItem('erpGlobalMarqueeEnabled', String(marqueeEnabled));
+    localStorage.setItem('erpGlobalMarqueeText', marqueeText);
+    success('Workspace marquee announcement banner saved and broadcasted!');
   };
 
   const handlePasskeyToggle = async () => {
@@ -278,42 +291,72 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ onOpenFaceEnro
           </div>
         </div>
 
-        {/* Marquee Ticker Notice */}
+        {/* Marquee Ticker Notice (Administrator Only) */}
         <div className="erp-card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', fontWeight: 700, fontSize: '1.125rem' }}>
-            <Megaphone size={20} color="var(--app-primary)" />
-            <span>{translateEntity('Workspace Marquee Banner')}</span>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer', fontWeight: 600 }}>
-              <input
-                type="checkbox"
-                checked={marqueeEnabled}
-                onChange={(e) => setMarqueeEnabled(e.target.checked)}
-                style={{ width: '1rem', height: '1rem' }}
-              />
-              <span>{translateEntity('Enable moving announcement banner')}</span>
-            </label>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--app-muted)', marginBottom: '0.25rem' }}>
-                {translateEntity('Banner Announcement Text')}
-              </label>
-              <input
-                type="text"
-                className="erp-input"
-                value={marqueeText}
-                onChange={(e) => setMarqueeText(e.target.value)}
-                placeholder="e.g. Q3 Sales Target achieved! Quarterly review at 3 PM."
-              />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, fontSize: '1.125rem' }}>
+              <Megaphone size={20} color="var(--app-primary)" />
+              <span>{translateEntity('Workspace Marquee Banner')}</span>
             </div>
-
-            <button type="button" onClick={handleSaveMarquee} className="erp-btn erp-btn-primary erp-btn-sm" style={{ alignSelf: 'flex-start' }}>
-              <Save size={14} />
-              <span>{translateEntity('Save Banner Settings')}</span>
-            </button>
+            {isAdmin ? (
+              <span className="erp-badge erp-badge-info" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.725rem' }}>
+                <ShieldCheck size={12} /> {translateEntity('Administrator Privilege')}
+              </span>
+            ) : (
+              <span className="erp-badge erp-badge-warning" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.725rem' }}>
+                <Lock size={12} /> {translateEntity('Administrator Only')}
+              </span>
+            )}
           </div>
+
+          {isAdmin ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer', fontWeight: 600 }}>
+                <input
+                  type="checkbox"
+                  checked={marqueeEnabled}
+                  onChange={(e) => setMarqueeEnabled(e.target.checked)}
+                  style={{ width: '1rem', height: '1rem', accentColor: 'var(--app-primary)' }}
+                />
+                <span>{translateEntity('Enable moving announcement banner')}</span>
+              </label>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--app-muted)', marginBottom: '0.25rem' }}>
+                  {translateEntity('Banner Announcement Text')}
+                </label>
+                <input
+                  type="text"
+                  className="erp-input"
+                  value={marqueeText}
+                  onChange={(e) => setMarqueeText(e.target.value)}
+                  placeholder="e.g. Q3 Sales Target achieved! Quarterly review at 3 PM."
+                />
+              </div>
+
+              <button type="button" onClick={handleSaveMarquee} className="erp-btn erp-btn-primary erp-btn-sm" style={{ alignSelf: 'flex-start' }}>
+                <Save size={14} />
+                <span>{translateEntity('Save Banner Settings')}</span>
+              </button>
+            </div>
+          ) : (
+            <div
+              style={{
+                padding: '0.875rem 1rem',
+                borderRadius: '0.5rem',
+                backgroundColor: 'var(--app-hover)',
+                border: '1px solid var(--app-border)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+              }}
+            >
+              <Lock size={18} style={{ color: 'var(--app-muted)', flexShrink: 0 }} />
+              <p style={{ fontSize: '0.8125rem', color: 'var(--app-muted)', margin: 0 }}>
+                Broadcasting and configuring the Workspace Marquee Announcement Banner is restricted to the <strong>Administrator</strong> role.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
