@@ -1,0 +1,57 @@
+name: eco-erp-system
+region: nyc
+services:
+  - name: erp-backend
+    dockerfile_path: erp-backend/Dockerfile
+    source_dir: erp-backend
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    routes:
+      - path: /api
+      - path: /health
+    envs:
+      - key: DB_HOST
+        scope: RUN_TIME
+        value: ${db.HOSTNAME}
+      - key: DB_PORT
+        scope: RUN_TIME
+        value: ${db.PORT}
+      - key: DB_USER
+        scope: RUN_TIME
+        value: ${db.USERNAME}
+      - key: DB_PASSWORD
+        scope: RUN_TIME
+        value: ${db.PASSWORD}
+      - key: DB_NAME
+        scope: RUN_TIME
+        value: ${db.DATABASE}
+      - key: SERVER_PORT
+        scope: RUN_TIME
+        value: ":8080"
+      - key: WEBAUTHN_RP_ID
+        scope: RUN_TIME
+        value: ${APP_DOMAIN}
+      - key: WEBAUTHN_RP_ORIGINS
+        scope: RUN_TIME
+        value: https://${APP_DOMAIN}
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 10
+      period_seconds: 15
+
+static_sites:
+  - name: erp-frontend
+    source_dir: erp-frontend/erp-system
+    build_command: npm run build
+    output_dir: dist
+    routes:
+      - path: /
+    catchall_document: index.html
+
+databases:
+  - name: db
+    engine: PG
+    version: "16"
+    production: false
+    cluster_name: erp-postgres-db

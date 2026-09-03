@@ -322,6 +322,19 @@ func main() {
 	router.POST("/api/auth/passkey/login/begin", beginPasskeyLogin)
 	router.POST("/api/auth/passkey/login/finish", finishPasskeyLogin)
 
+	// Admin, RBAC, Menu Assignments & Audit Logs
+	ensureAdminDataSeeded()
+	router.GET("/api/admin/roles", listAdminRoles)
+	router.POST("/api/admin/roles", createOrUpdateRole)
+	router.GET("/api/admin/menu-assignments", listMenuAssignments)
+	router.POST("/api/admin/menu-assignments", saveMenuAssignments)
+	router.GET("/api/admin/users", listAdminUsers)
+	router.PATCH("/api/admin/users/:id", updateAdminUser)
+	router.GET("/api/admin/audit-logs", listAuditLogs)
+	router.GET("/api/admin/user-sessions", listUserSessions)
+	router.GET("/api/admin/user-sessions/:id", getUserSessionDetail)
+	router.POST("/api/admin/activity/track", trackUserActivity)
+
 	// Health check
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})

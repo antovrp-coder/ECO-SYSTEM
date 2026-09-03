@@ -38,6 +38,8 @@ type User struct {
 	Username              string                   `gorm:"uniqueIndex;not null" json:"username"`
 	Email                 string                   `gorm:"uniqueIndex;not null" json:"email"`
 	FullName              string                   `json:"full_name"`
+	Role                  string                   `gorm:"default:'Admin'" json:"role"`
+	IsActive              bool                     `gorm:"default:true" json:"is_active"`
 	LocalizedDisplayNames string                   `gorm:"type:text" json:"-"`
 	VoiceCommands         string                   `gorm:"type:text" json:"-"`
 	FaceDescriptor        string                   `gorm:"type:text" json:"-"`
@@ -518,3 +520,101 @@ func (FinanceInvoice) TableName() string {
 func (FinanceExpenseClaim) TableName() string {
 	return "finance_expense_claims"
 }
+
+// Role represents an enterprise user access role.
+type Role struct {
+	ID          uint      `gorm:"primaryKey" json:"id"`
+	CreatedAt   time.Time `json:"created_at,omitempty"`
+	UpdatedAt   time.Time `json:"updated_at,omitempty"`
+	Name        string    `gorm:"uniqueIndex;not null" json:"name"`
+	Description string    `json:"description"`
+	Level       string    `json:"level"` // "Full Access", "Read & Write", "Read Only", "Custom"
+	MemberCount int       `json:"member_count"`
+	IsSystem    bool      `json:"is_system"`
+}
+
+func (Role) TableName() string {
+	return "roles"
+}
+
+// RoleMenuAssignment maps accessible modules and menus to a role.
+type RoleMenuAssignment struct {
+	ID          uint      `gorm:"primaryKey" json:"id"`
+	CreatedAt   time.Time `json:"created_at,omitempty"`
+	UpdatedAt   time.Time `json:"updated_at,omitempty"`
+	RoleName    string    `gorm:"index;not null" json:"role_name"`
+	ModuleName  string    `gorm:"index;not null" json:"module_name"`
+	SubMenuName string    `json:"sub_menu_name"`
+	CanView     bool      `json:"can_view"`
+	CanCreate   bool      `json:"can_create"`
+	CanEdit     bool      `json:"can_edit"`
+	CanDelete   bool      `json:"can_delete"`
+}
+
+func (RoleMenuAssignment) TableName() string {
+	return "role_menu_assignments"
+}
+
+// AuditLog records security, authentication, and role assignment events.
+type AuditLog struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	Username  string    `gorm:"index" json:"username"`
+	Action    string    `json:"action"`
+	Category  string    `json:"category"` // "Auth", "RBAC", "Menu", "Security"
+	Details   string    `json:"details"`
+	IPAddress string    `json:"ip_address"`
+	Status    string    `json:"status"` // "Success", "Warning", "Denied"
+}
+
+func (AuditLog) TableName() string {
+	return "audit_logs"
+}
+
+// UserSessionActivity tracks user login sessions, geographical origin, navigation screens opened, and business transactions.
+type UserSessionActivity struct {
+	ID            uint            `gorm:"primaryKey" json:"id"`
+	CreatedAt     time.Time       `json:"created_at"`
+	UpdatedAt     time.Time       `json:"updated_at"`
+	SessionToken  string          `gorm:"index" json:"session_token"`
+	UserID        uint            `gorm:"index" json:"user_id"`
+	Username      string          `gorm:"index;not null" json:"username"`
+	FullName      string          `json:"full_name"`
+	Role          string          `json:"role"`
+	AuthMethod    string          `json:"auth_method"` // "Passkey (FIDO2)", "Face Biometric", "Standard Password"
+	LoginTime     time.Time       `json:"login_time"`
+	LogoutTime    *time.Time      `json:"logout_time,omitempty"`
+	DurationMins  int             `json:"duration_mins"`
+	IPAddress     string          `json:"ip_address"`
+	GeoLocation   string          `json:"geo_location"` // e.g. "Dubai, United Arab Emirates"
+	CountryCode   string          `json:"country_code"` // e.g. "AE", "IN", "US", "SG", "GB"
+	City          string          `json:"city"`         // e.g. "Dubai", "Bengaluru", "Singapore"
+	DeviceBrowser string          `json:"device_browser"`
+	ScreensJSON   string          `gorm:"type:text" json:"-"`
+	TxnsJSON      string          `gorm:"type:text" json:"-"`
+	ScreensOpened []UserNavScreen `gorm:"-" json:"screens_opened"`
+	Transactions  []UserTxnAction `gorm:"-" json:"transactions"`
+	Status        string          `json:"status"` // "Active", "Signed Out", "Expired"
+}
+
+type UserNavScreen struct {
+	Timestamp string `json:"timestamp"`
+	Module    string `json:"module"`
+	SubMenu   string `json:"sub_menu"`
+	Screen    string `json:"screen"`
+}
+
+type UserTxnAction struct {
+	Timestamp   string `json:"timestamp"`
+	Type        string `json:"type"`
+	Module      string `json:"module"`
+	Summary     string `json:"summary"`
+	AmountCents int64  `json:"amount_cents"`
+	Status      string `json:"status"`
+}
+
+func (UserSessionActivity) TableName() string {
+	return "user_session_activities"
+}
+
+

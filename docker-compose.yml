@@ -37,7 +37,7 @@ services:
 
   frontend:
     build:
-      context: ./erp-frontend/erp-system
+      context: ./erp-frontend
     container_name: erp-frontend
     depends_on:
       - backend
