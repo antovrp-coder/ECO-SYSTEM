@@ -305,7 +305,7 @@ func ensureAdminDataSeeded() {
 
 	// Make sure all 5 submenus exist
 	adminSubmenus := []MenuItem{
-		{ModuleID: adminMod.ID, Name: "Assign Menu Roles", Route: "/admin/menu-assignment", Order: 1},
+		{ModuleID: adminMod.ID, Name: "Menu Assignment", Route: "/admin/menu-assignment", Order: 1},
 		{ModuleID: adminMod.ID, Name: "Roles & Permissions", Route: "/admin/roles", Order: 2},
 		{ModuleID: adminMod.ID, Name: "User Management", Route: "/admin/users", Order: 3},
 		{ModuleID: adminMod.ID, Name: "User Login & Geo Activity", Route: "/admin/user-sessions", Order: 4},

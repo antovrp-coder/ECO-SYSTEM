@@ -14,15 +14,8 @@ export const MarqueeBanner: React.FC<MarqueeBannerProps> = ({ customText, enable
   const [isHovered, setIsHovered] = React.useState(false);
   const username = user?.username || 'default';
   
-  const isEnabled =
-    enabled ??
-    (localStorage.getItem('erpGlobalMarqueeEnabled') === 'true' ||
-      localStorage.getItem(`erpMarqueeEnabled_${username}`) === 'true');
-  const text =
-    customText ||
-    localStorage.getItem('erpGlobalMarqueeText') ||
-    localStorage.getItem(`erpMarqueeText_${username}`) ||
-    '✨ Welcome to Enterprise ERP System • Multi-Module Intelligent Platform';
+  const isEnabled = enabled ?? (localStorage.getItem(`erpMarqueeEnabled_${username}`) === 'true');
+  const text = customText || localStorage.getItem(`erpMarqueeText_${username}`) || '✨ Welcome to Enterprise ERP System • Multi-Module Intelligent Platform';
 
   if (!isEnabled) return null;
 
